@@ -1,0 +1,67 @@
+﻿<footer style="background: linear-gradient(135deg, #1a1a1a 0%, #2d0000 100%);"
+        class="text-white pt-5 pb-3 mt-5">
+    <div class="container">
+        <div class="row">
+            <!-- Columna 1: Marca -->
+            <div class="col-md-4 mb-4">
+                <h5 style="color: #f5a623; letter-spacing: 2px;">
+                    🔥 SAL Y FUEGO
+                </h5>
+                <p class="text-secondary small mt-2">
+                    Restaurante de especialidades con sabores únicos.
+                    Tacos, hamburguesas, cortes de carne y mucho más.
+                </p>
+            </div>
+
+            <!-- Columna 2: Links rápidos -->
+            <div class="col-md-4 mb-4">
+                <h6 style="color: #f5a623; letter-spacing: 1px;">
+                    MENÚ RÁPIDO
+                </h6>
+                <ul class="list-unstyled mt-2">
+                    <li>
+                        <a asp-controller="Producto" asp-action="Index"
+                           class="text-secondary text-decoration-none small">
+                            → Productos
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Combo" asp-action="Index"
+                           class="text-secondary text-decoration-none small">
+                            → Combos
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Menu" asp-action="Disponible"
+                           class="text-secondary text-decoration-none small">
+                            → Menú del Día
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Columna 3: Horario -->
+            <div class="col-md-4 mb-4">
+                <h6 style="color: #f5a623; letter-spacing: 1px;">
+                    HORARIOS
+                </h6>
+                <ul class="list-unstyled mt-2 text-secondary small">
+                    <li>🕗 Desayuno: 7:00 am - 10:30 am</li>
+                    <li>🕚 Almuerzo: 11:00 am - 3:00 pm</li>
+                    <li>🕕 Cena: 6:00 pm - 10:00 pm</li>
+                </ul>
+            </div>
+        </div>
+
+        <hr style="border-color: #444;" />
+
+        <div class="text-center text-secondary small">
+            <p class="mb-0">
+                &copy; 2026 Sal y Fuego — Todos los derechos reservados
+            </p>
+            <p class="mb-0">
+                Universidad Técnica Nacional — Ingeniería de Software
+            </p>
+        </div>
+    </div>
+</footer>

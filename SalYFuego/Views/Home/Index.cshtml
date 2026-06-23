@@ -1,0 +1,91 @@
+﻿@model IEnumerable<Sal_Fuego.Aplication.DTOs.ProductoDTO>
+
+@{
+    ViewData["Title"] = "Inicio";
+}
+
+<!-- Hero Section -->
+<div style="background: linear-gradient(135deg, #1a1a1a 0%, #2d0000 100%);
+    min-height: 90vh;
+    display: flex;
+    align-items: center;">
+    <div class="container text-center text-white py-5">
+        <p style="color: #f5a623; letter-spacing: 4px; font-size: 0.9rem;">
+            RESTAURANTE DE ESPECIALIDADES
+        </p>
+        <h1 style="font-family: 'Georgia', serif;
+            font-size: 4rem;
+            letter-spacing: 3px;">
+            🔥 SAL Y FUEGO
+        </h1>
+        <p class="lead text-secondary mt-3 mb-4"
+           style="max-width: 600px; margin: 0 auto;">
+            Sabores auténticos que despiertan los sentidos.
+            Tacos, hamburguesas, cortes de carne y mucho más,
+            preparados con pasión y tradición.
+        </p>
+        <div class="d-flex justify-content-center gap-3 mt-4">
+            <a asp-controller="Menu" asp-action="Disponible"
+               class="btn btn-lg px-4"
+               style="background-color: #f5a623; color: #1a1a1a; font-weight: bold;">
+                Ver Menú del Día
+            </a>
+            <a asp-controller="Producto" asp-action="Index"
+               class="btn btn-lg btn-outline-light px-4">
+                Ver Productos
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Sección de categorías destacadas con fotos de la BD -->
+<div class="container py-5">
+    <h2 class="text-center mb-2"
+        style="font-family: 'Georgia', serif;">
+        ¿Qué tenemos para vos?
+    </h2>
+    <p class="text-center text-muted mb-5">
+        Explorá nuestra variedad de platillos
+    </p>
+
+    <div class="row text-center g-4">
+        @foreach (var producto in Model)
+        {
+            <div class="row text-center g-4 justify-content-center">
+                <div class="card border-0 shadow-sm h-100">
+                    <!-- Foto real del producto desde la BD -->
+                    <img src="@producto.ImagenUrl"
+                         alt="@producto.Nombre"
+                         class="card-img-top"
+                         style="height: 200px; object-fit: cover;">
+                    <div class="card-body">
+                        <h5 class="mt-2">@producto.CategoriaNombre</h5>
+                        <p class="text-muted small">@producto.Nombre</p>
+                        <a asp-controller="Producto"
+                           asp-action="Detalle"
+                           asp-route-id="@producto.IdProducto"
+                           class="btn btn-sm btn-outline-dark mt-2">
+                            Ver más
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Call to action -->
+<div style="background-color: #f5a623;" class="py-5">
+    <div class="container text-center">
+        <h3 style="color: #1a1a1a; font-family: 'Georgia', serif;">
+            ¿Listo para ordenar?
+        </h3>
+        <p style="color: #2d0000;">
+            Explorá nuestros combos y aprovechá los precios especiales
+        </p>
+        <a asp-controller="Combo" asp-action="Index"
+           class="btn btn-dark btn-lg px-5 mt-2">
+            Ver Combos
+        </a>
+    </div>
+</div>

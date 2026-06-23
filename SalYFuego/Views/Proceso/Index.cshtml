@@ -1,0 +1,41 @@
+﻿@model IEnumerable<Sal_Fuego.Aplication.DTOs.ProcesoDTO>
+
+@{
+    ViewData["Title"] = "Procesos de Preparación";
+}
+
+<div class="container mt-4">
+    <h1>Procesos de Preparación</h1>
+    <hr />
+
+    <table class="table table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Producto</th>
+                <th>Cantidad de Pasos</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.NombreProducto</td>
+                    <td>
+                        <span class="badge bg-primary">
+                            @item.CantidadPasos @(item.CantidadPasos == 1 ? "paso" : "pasos")
+                        </span>
+                    </td>
+                    <td>
+                        <a asp-controller="Proceso"
+                           asp-action="Detalle"
+                           asp-route-id="@item.IdProducto"
+                           class="btn btn-sm btn-outline-primary">
+                            Ver detalle
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,105 @@
+﻿<nav class="navbar navbar-expand-lg shadow-sm"
+     style="background-color: #ffffff; border-bottom: 3px solid #f5a623;">
+    <div class="container">
+        <!-- Logo -->
+        <a class="navbar-brand d-flex align-items-center gap-2"
+           asp-controller="Home" asp-action="Index">
+            <img src="/uploads/productos/salyfuego-logo.jpg"
+                 alt="Sal y Fuego"
+                 style="height: 45px; width: auto; border-radius: 6px;">
+        </a>
+
+        <!-- Botón hamburguesa móvil -->
+        <button class="navbar-toggler border-0" type="button"
+                data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"
+                  style="filter: invert(1);"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <!-- Links principales -->
+            <ul class="navbar-nav me-auto gap-1">
+                <li class="nav-item">
+                    <a class="nav-link px-3 py-2 rounded"
+                       style="color: #333; letter-spacing:1px; font-size:0.85rem;"
+                       asp-controller="Home" asp-action="Index">
+                        INICIO
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link px-3 py-2 rounded"
+                       style="color: #333; letter-spacing:1px; font-size:0.85rem;"
+                       asp-controller="Producto" asp-action="Index">
+                        PRODUCTOS
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link px-3 py-2 rounded"
+                       style="color: #333; letter-spacing:1px; font-size:0.85rem;"
+                       asp-controller="Combo" asp-action="Index">
+                        COMBOS
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link px-3 py-2 rounded"
+                       style="color: #333; letter-spacing:1px; font-size:0.85rem;"
+                       asp-controller="Menu" asp-action="Index">
+                        MENÚS
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link px-3 py-2 rounded"
+                       style="color: #333; letter-spacing:1px; font-size:0.85rem;"
+                       asp-controller="Menu" asp-action="Disponible">
+                        MENÚ DEL DÍA
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link px-3 py-2 rounded"
+                       style="color: #333; letter-spacing:1px; font-size:0.85rem;"
+                       asp-controller="Proceso" asp-action="Index">
+                        PROCESOS
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Lado derecho: Carrito + Login -->
+            <!-- Lado derecho: Carrito + Login -->
+            <ul class="navbar-nav ms-auto align-items-center gap-3">
+
+                <!-- Carrito -->
+                <li class="nav-item">
+                    <a class="nav-link position-relative px-2" href="#" style="color: #333;">
+                        🛒
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill"
+                              style="background-color: #f5a623; color: #1a1a1a; font-size: 0.65rem;">
+                            0
+                        </span>
+                    </a>
+                </li>
+
+                <!-- Iniciar Sesión -->
+                <li class="nav-item">
+                    <a href="#"
+                       class="btn btn-sm btn-outline-dark px-3"
+                       style="font-size: 0.8rem; letter-spacing: 1px;">
+                        INICIAR SESIÓN
+                    </a>
+                </li>
+
+                <!-- Registrarse -->
+                <li class="nav-item">
+                    <a href="#"
+                       class="btn btn-sm px-3"
+                       style="background-color: #f5a623;
+                        color: #1a1a1a;
+                        font-weight: bold;
+                        font-size: 0.8rem;
+                        letter-spacing: 1px;">
+                        REGISTRARSE
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>

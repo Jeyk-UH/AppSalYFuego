@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/Basededatos/" />
+  <Project Path="SalYFuego.Application/SalYFuego.Application.csproj" />
+  <Project Path="SalYFuego.Infraestructure/SalYFuego.Infraestructure.csproj" />
+  <Project Path="SalYFuego/SalYFuego.csproj" />
+</Solution>

@@ -1,0 +1,62 @@
+﻿@model IEnumerable<Sal_Fuego.Aplication.DTOs.MenuDTO>
+
+@{
+    ViewData["Title"] = "Listado de Menús";
+}
+
+<div class="container mt-4">
+    <h1>Menús</h1>
+    <hr />
+
+    <table class="table table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Nombre</th>
+                <th>Horario</th>
+                <th>Disponibilidad</th>
+                <th>Estado</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Nombre</td>
+                    <td>@item.HoraInicio.ToString("hh:mm tt") - @item.HoraFin.ToString("hh:mm tt")</td>
+                    <td>
+                        @if (item.Disponibilidad.Any(d => d.DiaSemana != null))
+                        {
+                            <span>
+                                @string.Join(", ", item.Disponibilidad
+                                        .Where(d => d.DiaSemana != null)
+                                        .Select(d => d.DiaSemana))
+                            </span>
+                        }
+                        else
+                        {
+                            var disp = item.Disponibilidad.FirstOrDefault();
+                            <span>@disp?.FechaInicio?.ToString("dd/MM/yyyy") - @disp?.FechaFin?.ToString("dd/MM/yyyy")</span>
+                        }
+                    </td>
+                    <td>
+                        @if (item.EstaActivo)
+                        {
+                            <span class="badge bg-success">Activo</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Inactivo</span>
+                        }
+                    </td>
+                    <td>
+                        <a asp-controller="Menu" asp-action="Disponible"
+                           class="btn btn-sm btn-outline-primary">
+                            Ver Menú Disponible
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,42 @@
+C:\Users\Jeyko\OneDrive\Universidad\UTN\ISW\2026\2 Cuatri\Progra VI\Proyecto\Sal&FuegoPro\appSalYFuego\SalYFuego.Infraestructure\bin\Debug\net10.0\SalYFuego.Infraestructure.deps.json
+C:\Users\Jeyko\OneDrive\Universidad\UTN\ISW\2026\2 Cuatri\Progra VI\Proyecto\Sal&FuegoPro\appSalYFuego\SalYFuego.Infraestructure\bin\Debug\net10.0\SalYFuego.Infraestructure.runtimeconfig.json
+C:\Users\Jeyko\OneDrive\Universidad\UTN\ISW\2026\2 Cuatri\Progra VI\Proyecto\Sal&FuegoPro\appSalYFuego\SalYFuego.Infraestructure\bin\Debug\net10.0\SalYFuego.Infraestructure.dll
+C:\Users\Jeyko\OneDrive\Universidad\UTN\ISW\2026\2 Cuatri\Progra VI\Proyecto\Sal&FuegoPro\appSalYFuego\SalYFuego.Infraestructure\bin\Debug\net10.0\SalYFuego.Infraestructure.pdb
+C:\Users\Jeyko\OneDrive\Universidad\UTN\ISW\2026\2 Cuatri\Progra VI\Proyecto\Sal&FuegoPro\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\SalYFuego.Infraestructure.csproj.AssemblyReference.cache
+C:\Users\Jeyko\OneDrive\Universidad\UTN\ISW\2026\2 Cuatri\Progra VI\Proyecto\Sal&FuegoPro\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\SalYFuego.Infraestructure.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Jeyko\OneDrive\Universidad\UTN\ISW\2026\2 Cuatri\Progra VI\Proyecto\Sal&FuegoPro\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\SalYFuego.Infraestructure.AssemblyInfoInputs.cache
+C:\Users\Jeyko\OneDrive\Universidad\UTN\ISW\2026\2 Cuatri\Progra VI\Proyecto\Sal&FuegoPro\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\SalYFuego.Infraestructure.AssemblyInfo.cs
+C:\Users\Jeyko\OneDrive\Universidad\UTN\ISW\2026\2 Cuatri\Progra VI\Proyecto\Sal&FuegoPro\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\SalYFuego.Infraestructure.csproj.CoreCompileInputs.cache
+C:\Users\Jeyko\OneDrive\Universidad\UTN\ISW\2026\2 Cuatri\Progra VI\Proyecto\Sal&FuegoPro\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\SalYFuego.Infraestructure.dll
+C:\Users\Jeyko\OneDrive\Universidad\UTN\ISW\2026\2 Cuatri\Progra VI\Proyecto\Sal&FuegoPro\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\refint\SalYFuego.Infraestructure.dll
+C:\Users\Jeyko\OneDrive\Universidad\UTN\ISW\2026\2 Cuatri\Progra VI\Proyecto\Sal&FuegoPro\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\SalYFuego.Infraestructure.pdb
+C:\Users\Jeyko\OneDrive\Universidad\UTN\ISW\2026\2 Cuatri\Progra VI\Proyecto\Sal&FuegoPro\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\SalYFuego.Infraestructure.genruntimeconfig.cache
+C:\Users\Jeyko\OneDrive\Universidad\UTN\ISW\2026\2 Cuatri\Progra VI\Proyecto\Sal&FuegoPro\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\ref\SalYFuego.Infraestructure.dll
+D:\Documentos\2026\2 cuatri\Proyecto\appSalYFuego\SalYFuego.Infraestructure\bin\Debug\net10.0\SalYFuego.Infraestructure.deps.json
+D:\Documentos\2026\2 cuatri\Proyecto\appSalYFuego\SalYFuego.Infraestructure\bin\Debug\net10.0\SalYFuego.Infraestructure.runtimeconfig.json
+D:\Documentos\2026\2 cuatri\Proyecto\appSalYFuego\SalYFuego.Infraestructure\bin\Debug\net10.0\SalYFuego.Infraestructure.dll
+D:\Documentos\2026\2 cuatri\Proyecto\appSalYFuego\SalYFuego.Infraestructure\bin\Debug\net10.0\SalYFuego.Infraestructure.pdb
+D:\Documentos\2026\2 cuatri\Proyecto\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\SalYFuego.Infraestructure.csproj.AssemblyReference.cache
+D:\Documentos\2026\2 cuatri\Proyecto\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\SalYFuego.Infraestructure.GeneratedMSBuildEditorConfig.editorconfig
+D:\Documentos\2026\2 cuatri\Proyecto\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\SalYFuego.Infraestructure.AssemblyInfoInputs.cache
+D:\Documentos\2026\2 cuatri\Proyecto\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\SalYFuego.Infraestructure.AssemblyInfo.cs
+D:\Documentos\2026\2 cuatri\Proyecto\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\SalYFuego.Infraestructure.csproj.CoreCompileInputs.cache
+D:\Documentos\2026\2 cuatri\Proyecto\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\SalYFuego.Infraestructure.dll
+D:\Documentos\2026\2 cuatri\Proyecto\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\refint\SalYFuego.Infraestructure.dll
+D:\Documentos\2026\2 cuatri\Proyecto\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\SalYFuego.Infraestructure.pdb
+D:\Documentos\2026\2 cuatri\Proyecto\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\SalYFuego.Infraestructure.genruntimeconfig.cache
+D:\Documentos\2026\2 cuatri\Proyecto\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\ref\SalYFuego.Infraestructure.dll
+D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego.Infraestructure\bin\Debug\net10.0\SalYFuego.Infraestructure.deps.json
+D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego.Infraestructure\bin\Debug\net10.0\SalYFuego.Infraestructure.runtimeconfig.json
+D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego.Infraestructure\bin\Debug\net10.0\SalYFuego.Infraestructure.dll
+D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego.Infraestructure\bin\Debug\net10.0\SalYFuego.Infraestructure.pdb
+D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\SalYFuego.Infraestructure.csproj.AssemblyReference.cache
+D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\SalYFuego.Infraestructure.GeneratedMSBuildEditorConfig.editorconfig
+D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\SalYFuego.Infraestructure.AssemblyInfoInputs.cache
+D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\SalYFuego.Infraestructure.AssemblyInfo.cs
+D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\SalYFuego.Infraestructure.csproj.CoreCompileInputs.cache
+D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\SalYFuego.Infraestructure.dll
+D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\refint\SalYFuego.Infraestructure.dll
+D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\SalYFuego.Infraestructure.pdb
+D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\SalYFuego.Infraestructure.genruntimeconfig.cache
+D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\ref\SalYFuego.Infraestructure.dll

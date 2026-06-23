@@ -1,0 +1,75 @@
+﻿@model Sal_Fuego.Aplication.DTOs.MenuDTO
+
+@{
+    ViewData["Title"] = "Menú Disponible";
+}
+
+<div class="container mt-4">
+
+    @if (Model == null)
+    {
+        <div class="alert alert-info text-center">
+            <h4>No hay menú disponible en este momento.</h4>
+            <p>Por favor volvé más tarde.</p>
+        </div>
+    }
+    else
+    {
+        <!-- Encabezado estilo menú de restaurante -->
+        <div class="text-center mb-4">
+            <h1 class="display-5"> Sal y Fuego </h1>
+            <h3>@Model.Nombre</h3>
+            <p class="text-muted">
+                Horario: @Model.HoraInicio.ToString("hh:mm tt") - @Model.HoraFin.ToString("hh:mm tt")
+            </p>
+            <!-- Rango de disponibilidad -->
+            @if (Model.Disponibilidad.Any(d => d.DiaSemana != null))
+            {
+                <p class="text-muted">
+                    Disponible: @string.Join(", ", Model.Disponibilidad
+                                            .Where(d => d.DiaSemana != null)
+                                            .Select(d => d.DiaSemana))
+                </p>
+            }
+            else
+            {
+                var disp = Model.Disponibilidad.FirstOrDefault();
+                <p class="text-muted">
+                    Disponible del @disp?.FechaInicio?.ToString("dd/MM/yyyy")
+                    al @disp?.FechaFin?.ToString("dd/MM/yyyy")
+                </p>
+            }
+        </div>
+
+        <hr class="border border-warning border-2" />
+
+        <!-- Items agrupados por categoría -->
+        @foreach (var categoria in Model.Items.GroupBy(i => i.CategoriaNombre))
+        {
+            <h4 class="mt-4 text-warning">— @categoria.Key —</h4>
+            <div class="row">
+                @foreach (var item in categoria)
+                {
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 border-0 shadow-sm">
+                            @if (!string.IsNullOrEmpty(item.ImagenUrl))
+                            {
+                                <img src="@item.ImagenUrl"
+                                     class="card-img-top"
+                                     alt="@item.Nombre"
+                                     style="height:160px; object-fit:cover;">
+                            }
+                            <div class="card-body">
+                                <h6 class="card-title">@item.Nombre</h6>
+                                <span class="badge @(item.Tipo == "Combo" ? "bg-warning text-dark" : "bg-secondary") mb-1">
+                                    @item.Tipo
+                                </span>
+                                <p class="text-success fw-bold">₡@item.Precio</p>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>
