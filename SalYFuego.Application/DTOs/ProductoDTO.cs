@@ -7,6 +7,7 @@
         public string? Descripcion { get; set; }
         public decimal Precio { get; set; }
         public bool Activo { get; set; }
+        public int IdCategoria { get; set; }
         // Nombre de la categoría
         public string CategoriaNombre { get; set; } = null!;
         // Lista de ingredientes

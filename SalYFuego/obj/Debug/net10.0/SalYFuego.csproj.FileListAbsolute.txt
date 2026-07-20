@@ -142,3 +142,4 @@ D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego\obj\Debug\net10.0\
 D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego\obj\Debug\net10.0\SalYFuego.pdb
 D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego\obj\Debug\net10.0\SalYFuego.genruntimeconfig.cache
 D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego\obj\Debug\net10.0\ref\SalYFuego.dll
+D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego\obj\Debug\net10.0\SalYFuego.sourcelink.json

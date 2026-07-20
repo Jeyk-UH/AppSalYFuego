@@ -18,12 +18,16 @@ builder.Services.AddScoped<IRepositoryProducto, RepositoryProducto>();
 builder.Services.AddScoped<IRepositoryCombo, RepositoryCombo>();
 builder.Services.AddScoped<IRepositoryMenu, RepositoryMenu>();
 builder.Services.AddScoped<IRepositoryProceso, RepositoryProceso>();
+builder.Services.AddScoped<IRepositoryIngrediente, RepositoryIngrediente>();
+builder.Services.AddScoped<IRepositoryCategoria, RepositoryCategoria>();
 
 // Registro de Servicios
 builder.Services.AddScoped<IServiceProducto, ServiceProducto>();
 builder.Services.AddScoped<IServiceCombo, ServiceCombo>();
 builder.Services.AddScoped<IServiceMenu, ServiceMenu>();
 builder.Services.AddScoped<IServiceProceso, ServiceProceso>();
+builder.Services.AddScoped<IServiceIngrediente, ServiceIngrediente>();
+builder.Services.AddScoped<IServiceCategoria, ServiceCategoria>();
 
 // Registro de AutoMapper
 builder.Services.AddAutoMapper(cfg => {
@@ -31,6 +35,7 @@ builder.Services.AddAutoMapper(cfg => {
     cfg.AddProfile<ComboProfile>();
     cfg.AddProfile<MenuProfile>();
     cfg.AddProfile<ProcesoProfile>();
+    cfg.AddProfile<CategoriaProfile>();
 });
 
 builder.Services.AddControllersWithViews();

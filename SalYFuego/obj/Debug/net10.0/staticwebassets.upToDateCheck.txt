@@ -131,6 +131,7 @@ wwwroot\uploads\combos\combo-panini.jpg
 wwwroot\uploads\combos\combo-parrilla-completa.jpg
 wwwroot\uploads\combos\combo-taco-postre.jpg
 wwwroot\uploads\combos\combo-tico-grill.jpg
+wwwroot\uploads\productos\7a54af15-7106-4d70-a075-f27b237b9037.png
 wwwroot\uploads\productos\arrollado-canela.jpg
 wwwroot\uploads\productos\arrollado-dulce-leche.jpg
 wwwroot\uploads\productos\arroz-mixto.jpg

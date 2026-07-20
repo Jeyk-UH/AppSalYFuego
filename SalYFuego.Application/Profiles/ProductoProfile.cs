@@ -17,6 +17,8 @@ namespace Sal_Fuego.Aplication.Profiles
                     opt => opt.MapFrom(src => src.IdCategoriaNavigation.Nombre))
                 .ForMember(dest => dest.Ingredientes,
                     opt => opt.MapFrom(src => src.IdIngrediente))
+                .ForMember(dest => dest.IdCategoria,
+    opt => opt.MapFrom(src => src.IdCategoria))
                 .ForMember(dest => dest.ImagenUrl,
                     opt => opt.MapFrom(src => src.ProductoImagen
                         .Where(i => i.EsPrincipal == true)

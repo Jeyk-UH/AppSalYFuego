@@ -40,3 +40,4 @@ D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego.Infraestructure\ob
 D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\SalYFuego.Infraestructure.pdb
 D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\SalYFuego.Infraestructure.genruntimeconfig.cache
 D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\ref\SalYFuego.Infraestructure.dll
+D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego.Infraestructure\obj\Debug\net10.0\SalYFuego.Infraestructure.sourcelink.json

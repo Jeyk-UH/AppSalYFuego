@@ -1,0 +1,102 @@
+﻿@model IEnumerable<Sal_Fuego.Aplication.DTOs.ProductoDTO>
+
+@{
+    ViewData["Title"] = "Gestión de Productos";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>Gestión de Productos</h1>
+        <a asp-controller="AdminProducto" asp-action="Agregar" 
+           class="btn btn-success">
+            + Agregar Producto
+        </a>
+    </div>
+
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            @TempData["Exito"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Filtros -->
+<form method="get" class="row g-2 mb-4">
+    <div class="col-md-4">
+        <select name="categoriaId" class="form-select"
+                onchange="this.form.submit()">
+            <option value="">-- Todas las categorías --</option>
+            @foreach (var item in (IEnumerable<SelectListItem>)ViewBag.Categorias)
+            {
+                @if (item.Selected)
+                {
+                    <option value="@item.Value" selected>@item.Text</option>
+                }
+                else
+                {
+                    <option value="@item.Value">@item.Text</option>
+                }
+            }
+        </select>
+    </div>
+    </form>
+
+    <!-- Tabla -->
+    <table class="table table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Imagen</th>
+                <th>Nombre</th>
+                <th>Categoría</th>
+                <th>Precio</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        <img src="@item.ImagenUrl"
+                             alt="@item.Nombre"
+                             style="width:60px; height:60px; 
+                                    object-fit:cover; border-radius:6px;">
+                    </td>
+                    <td>@item.Nombre</td>
+                    <td>@item.CategoriaNombre</td>
+                    <td>₡@item.Precio.ToString("N2")</td>
+                    <td>
+                        @if (item.Activo)
+                        {
+                            <span class="badge bg-success">Activo</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Inactivo</span>
+                        }
+                    </td>
+                    <td>
+                        <a asp-controller="AdminProducto"
+                           asp-action="Editar"
+                           asp-route-id="@item.IdProducto"
+                           class="btn btn-sm btn-outline-warning">
+                            ✏️ Editar
+                        </a>
+                        <form asp-controller="AdminProducto"
+                              asp-action="Eliminar"
+                              method="post" class="d-inline"
+                              onsubmit="return confirm('¿Eliminar este producto?')">
+                            <input type="hidden" name="id" value="@item.IdProducto" />
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                🗑️ Eliminar
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

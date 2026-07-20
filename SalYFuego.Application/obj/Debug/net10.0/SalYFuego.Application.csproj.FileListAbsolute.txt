@@ -43,3 +43,4 @@ D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego.Application\obj\De
 D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego.Application\obj\Debug\net10.0\refint\SalYFuego.Application.dll
 D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego.Application\obj\Debug\net10.0\SalYFuego.Application.pdb
 D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego.Application\obj\Debug\net10.0\ref\SalYFuego.Application.dll
+D:\Programacion Ambien Web II\Proyecto\appSalYFuego\SalYFuego.Application\obj\Debug\net10.0\SalYFuego.Application.sourcelink.json
