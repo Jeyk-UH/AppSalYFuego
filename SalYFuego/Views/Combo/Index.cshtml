@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Sal_Fuego.Aplication.DTOs.ComboDTO>
+﻿@model IPagedList<Sal_Fuego.Aplication.DTOs.ComboDTO>
 
 @{
     ViewData["Title"] = "Catálogo de Combos";
@@ -36,6 +36,18 @@
                 </div>
             }
         </div>
+
+        @if (Model.PageCount > 1)
+        {
+            <div class="d-flex justify-content-center mt-4">
+                @Html.PagedListPager((IPagedList)Model, page => Url.Action("Index", new { page }),
+                    new PagedListRenderOptions
+                    {
+                        LiElementClasses = new[] { "page-item" },
+                        PageClasses = new[] { "page-link" }
+                    })
+            </div>
+        }
     }
     else
     {

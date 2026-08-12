@@ -1,4 +1,4 @@
-@model IEnumerable<Sal_Fuego.Aplication.DTOs.UsuarioDTO>
+@model IPagedList<Sal_Fuego.Aplication.DTOs.UsuarioDTO>
 
 @{
     ViewData["Title"] = "Gestión de Usuarios";
@@ -11,14 +11,6 @@
             + Agregar Usuario
         </a>
     </div>
-
-    @if (TempData["Exito"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show">
-            @TempData["Exito"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
 
     <table class="table table-hover align-middle">
         <thead class="table-dark">
@@ -55,7 +47,7 @@
                         </a>
                         <form asp-controller="AdminUsuario" asp-action="Eliminar"
                               method="post" class="d-inline"
-                              onsubmit="return confirm('@(item.Activo ? "¿Desactivar este usuario?" : "¿Activar este usuario?")')">
+                              onsubmit="return confirmarAccion(event, '@(item.Activo ? "¿Desactivar este usuario?" : "¿Activar este usuario?")')">
                             <input type="hidden" name="id" value="@item.IdUsuario" />
                             @Html.AntiForgeryToken()
                             @if (item.Activo)
@@ -76,4 +68,16 @@
             }
         </tbody>
     </table>
+
+    @if (Model.PageCount > 1)
+    {
+        <div class="d-flex justify-content-center mt-4">
+            @Html.PagedListPager((IPagedList)Model, page => Url.Action("Index", new { page }),
+                new PagedListRenderOptions
+                {
+                    LiElementClasses = new[] { "page-item" },
+                    PageClasses = new[] { "page-link" }
+                })
+        </div>
+    }
 </div>

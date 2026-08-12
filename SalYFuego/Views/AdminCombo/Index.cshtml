@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Sal_Fuego.Aplication.DTOs.ComboDTO>
+﻿@model IPagedList<Sal_Fuego.Aplication.DTOs.ComboDTO>
 
 @{
     ViewData["Title"] = "Gestión de Combos";
@@ -12,14 +12,6 @@
             + Agregar Combo
         </a>
     </div>
-
-    @if (TempData["Exito"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show">
-            @TempData["Exito"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
 
     <!-- Filtros -->
     <form method="get" class="row g-2 mb-4">
@@ -107,7 +99,7 @@
                         <form asp-controller="AdminCombo"
                               asp-action="Desactivar"
                               method="post" class="d-inline"
-                              onsubmit="return confirm(item.Activo ? '¿Desactivar este combo?' : '¿Activar este combo?')">
+                              onsubmit="return confirmarAccion(event, item.Activo ? '¿Desactivar este combo?' : '¿Activar este combo?')">
                             <input type="hidden" name="id" value="@item.IdCombo" />
                             @Html.AntiForgeryToken()
 
@@ -130,4 +122,17 @@
             }
         </tbody>
     </table>
+
+    @if (Model.PageCount > 1)
+    {
+        <div class="d-flex justify-content-center mt-4">
+            @Html.PagedListPager((IPagedList)Model,
+                page => Url.Action("Index", new { page, categoriaId = ViewBag.CategoriaSeleccionada, busqueda = ViewBag.Busqueda }),
+                new PagedListRenderOptions
+                {
+                    LiElementClasses = new[] { "page-item" },
+                    PageClasses = new[] { "page-link" }
+                })
+        </div>
+    }
 </div>

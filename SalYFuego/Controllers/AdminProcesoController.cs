@@ -4,12 +4,16 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Sal_Fuego.Aplication.Config;
 using Sal_Fuego.Aplication.DTOs;
 using Sal_Fuego.Aplication.Services.Interfaces;
+using X.PagedList;
+using X.PagedList.Extensions;
 
 namespace Sal_Fuego.Controllers
 {
     [Authorize(Roles = Roles.Administrador)]
     public class AdminProcesoController : Controller
     {
+        private const int TamanoPagina = 10;
+
         private readonly IServiceProceso _serviceProceso;
         private readonly IServiceProducto _serviceProducto;
 
@@ -21,11 +25,12 @@ namespace Sal_Fuego.Controllers
             _serviceProducto = serviceProducto;
         }
 
-        // Listado de procesos
-        public async Task<IActionResult> Index()
+        // Listado de procesos, paginado
+        public async Task<IActionResult> Index(int? page)
         {
             var procesos = await _serviceProceso.ListAsync();
-            return View(procesos);
+            var paginado = procesos.ToPagedList(page ?? 1, TamanoPagina);
+            return View(paginado);
         }
 
         // Formulario para agregar proceso a un producto

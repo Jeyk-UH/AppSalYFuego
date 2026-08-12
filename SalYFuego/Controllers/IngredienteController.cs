@@ -3,21 +3,26 @@ using Microsoft.AspNetCore.Mvc;
 using Sal_Fuego.Aplication.Config;
 using Sal_Fuego.Aplication.DTOs;
 using Sal_Fuego.Aplication.Services.Interfaces;
+using X.PagedList;
+using X.PagedList.Extensions;
 
 namespace Sal_Fuego.Controllers
 {
     [Authorize(Roles = Roles.Administrador)]
     public class IngredienteController : Controller
     {
+        private const int TamanoPagina = 10;
+
         private readonly IServiceIngrediente _service;
 
         public IngredienteController(IServiceIngrediente service) => _service = service;
 
-        // Listado de ingredientes
-        public async Task<IActionResult> Index()
+        // Listado de ingredientes, paginado
+        public async Task<IActionResult> Index(int? page)
         {
             var ingredientes = await _service.ListAsync();
-            return View(ingredientes);
+            var paginado = ingredientes.ToPagedList(page ?? 1, TamanoPagina);
+            return View(paginado);
         }
 
         // Formulario para agregar

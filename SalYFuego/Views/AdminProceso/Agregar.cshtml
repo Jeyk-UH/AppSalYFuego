@@ -10,11 +10,6 @@
     <h2>Agregar Proceso de Preparación</h2>
     <hr />
 
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger">@TempData["Error"]</div>
-    }
-
     <form asp-controller="AdminProceso" asp-action="Agregar" method="post">
         @Html.AntiForgeryToken()
 

@@ -9,19 +9,6 @@
         <div class="card-body p-4">
             <h2 class="text-center mb-4" style="color:#1a1a1a;">Iniciar Sesión</h2>
 
-            @if (!string.IsNullOrEmpty(ViewBag.Message))
-            {
-                <div class="alert alert-danger">@ViewBag.Message</div>
-            }
-
-            @if (TempData["Exito"] != null)
-            {
-                <div class="alert alert-success alert-dismissible fade show">
-                    @TempData["Exito"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            }
-
             <form asp-controller="Login" asp-action="Index" method="post">
                 @Html.AntiForgeryToken()
                 <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
@@ -51,6 +38,19 @@
         </div>
     </div>
 </div>
+
+@if (!string.IsNullOrEmpty(ViewBag.Message))
+{
+    <script>
+        Swal.fire({
+            icon: 'error',
+            title: 'Ups...',
+            text: @Html.Raw(System.Text.Json.JsonSerializer.Serialize((string)ViewBag.Message)),
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#2d0000'
+        });
+    </script>
+}
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

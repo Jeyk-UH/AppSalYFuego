@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Sal_Fuego.Aplication.Config;
 using Sal_Fuego.Aplication.DTOs;
 using Sal_Fuego.Aplication.Services.Interfaces;
+using X.PagedList;
+using X.PagedList.Extensions;
 
 namespace Sal_Fuego.Controllers
 {
@@ -12,6 +14,8 @@ namespace Sal_Fuego.Controllers
     [Authorize(Roles = Roles.Administrador)]
     public class AdminUsuarioController : Controller
     {
+        private const int TamanoPagina = 10;
+
         private readonly IServiceUsuario _serviceUsuario;
         private readonly IServiceRol _serviceRol;
 
@@ -21,11 +25,12 @@ namespace Sal_Fuego.Controllers
             _serviceRol = serviceRol;
         }
 
-        // Listado de usuarios
-        public async Task<IActionResult> Index()
+        // Listado de usuarios, paginado
+        public async Task<IActionResult> Index(int? page)
         {
             var usuarios = await _serviceUsuario.ListAsync();
-            return View(usuarios);
+            var paginado = usuarios.ToPagedList(page ?? 1, TamanoPagina);
+            return View(paginado);
         }
 
         // Formulario para agregar

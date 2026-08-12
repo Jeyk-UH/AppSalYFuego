@@ -4,12 +4,16 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Sal_Fuego.Aplication.Config;
 using Sal_Fuego.Aplication.DTOs;
 using Sal_Fuego.Aplication.Services.Interfaces;
+using X.PagedList;
+using X.PagedList.Extensions;
 
 namespace Sal_Fuego.Controllers
 {
     [Authorize(Roles = Roles.Administrador)]
     public class AdminComboController : Controller
     {
+        private const int TamanoPagina = 10;
+
         private readonly IServiceCombo _serviceCombo;
         private readonly IServiceCategoria _serviceCategoria;
         private readonly IServiceProducto _serviceProducto;
@@ -27,8 +31,8 @@ namespace Sal_Fuego.Controllers
             _env = env;
         }
 
-        // Listado con filtro por categoría
-        public async Task<IActionResult> Index(int? categoriaId, string? busqueda)
+        // Listado con filtro por categoría y paginación
+        public async Task<IActionResult> Index(int? categoriaId, string? busqueda, int? page)
         {
             var combos = await _serviceCombo.ListAsync();
             var categorias = await _serviceCategoria.ListAsync();
@@ -46,9 +50,11 @@ namespace Sal_Fuego.Controllers
 
             ViewBag.Categorias = new SelectList(
                 categorias, "IdCategoria", "Nombre", categoriaId);
+            ViewBag.CategoriaSeleccionada = categoriaId;
             ViewBag.Busqueda = busqueda;
 
-            return View(combos);
+            var paginado = combos.ToPagedList(page ?? 1, TamanoPagina);
+            return View(paginado);
         }
 
         // Formulario agregar

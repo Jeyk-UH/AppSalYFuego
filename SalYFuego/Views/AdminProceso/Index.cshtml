@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Sal_Fuego.Aplication.DTOs.ProcesoDTO>
+﻿@model IPagedList<Sal_Fuego.Aplication.DTOs.ProcesoDTO>
 
 @{
     ViewData["Title"] = "Gestión de Procesos de Preparación";
@@ -12,14 +12,6 @@
             + Agregar Proceso
         </a>
     </div>
-
-    @if (TempData["Exito"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show">
-            @TempData["Exito"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
 
     <table class="table table-hover align-middle">
         <thead class="table-dark">
@@ -58,7 +50,7 @@
                         <form asp-controller="AdminProceso"
                               asp-action="Eliminar"
                               method="post" class="d-inline"
-                              onsubmit="return confirm('¿Eliminar este proceso?')">
+                              onsubmit="return confirmarAccion(event, '¿Eliminar este proceso?')">
                             <input type="hidden" name="id" value="@item.IdProducto" />
                             @Html.AntiForgeryToken()
                             <button type="submit" class="btn btn-sm btn-outline-danger">
@@ -70,4 +62,16 @@
             }
         </tbody>
     </table>
+
+    @if (Model.PageCount > 1)
+    {
+        <div class="d-flex justify-content-center mt-4">
+            @Html.PagedListPager((IPagedList)Model, page => Url.Action("Index", new { page }),
+                new PagedListRenderOptions
+                {
+                    LiElementClasses = new[] { "page-item" },
+                    PageClasses = new[] { "page-link" }
+                })
+        </div>
+    }
 </div>

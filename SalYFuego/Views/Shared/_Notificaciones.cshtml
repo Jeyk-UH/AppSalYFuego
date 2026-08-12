@@ -1,0 +1,30 @@
+@* Muestra los mensajes de TempData["Exito"] / TempData["Error"] con SweetAlert2.
+   Se incluye una sola vez en _Layout.cshtml para que funcione en toda la app. *@
+
+@if (TempData["Exito"] != null)
+{
+    <script>
+        Swal.fire({
+            icon: 'success',
+            title: '¡Listo!',
+            text: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["Exito"])),
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#f5a623',
+            timer: 3000,
+            timerProgressBar: true
+        });
+    </script>
+}
+
+@if (TempData["Error"] != null)
+{
+    <script>
+        Swal.fire({
+            icon: 'error',
+            title: 'Ups...',
+            text: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["Error"])),
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#2d0000'
+        });
+    </script>
+}

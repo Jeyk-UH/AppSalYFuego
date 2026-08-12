@@ -10,11 +10,6 @@
     <h2>Agregar Combo</h2>
     <hr />
 
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger">@TempData["Error"]</div>
-    }
-
     <form asp-controller="AdminCombo" asp-action="Agregar"
           method="post" enctype="multipart/form-data">
         @Html.AntiForgeryToken()

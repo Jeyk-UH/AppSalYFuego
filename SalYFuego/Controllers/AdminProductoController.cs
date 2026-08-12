@@ -4,12 +4,16 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Sal_Fuego.Aplication.Config;
 using Sal_Fuego.Aplication.DTOs;
 using Sal_Fuego.Aplication.Services.Interfaces;
+using X.PagedList;
+using X.PagedList.Extensions;
 
 namespace Sal_Fuego.Controllers
 {
     [Authorize(Roles = Roles.Administrador)]
     public class AdminProductoController : Controller
     {
+        private const int TamanoPagina = 10;
+
         private readonly IServiceProducto _serviceProducto;
         private readonly IServiceCategoria _serviceCategoria;
         private readonly IServiceIngrediente _serviceIngrediente;
@@ -27,8 +31,8 @@ namespace Sal_Fuego.Controllers
             _env = env;
         }
 
-        // Listado con filtro por categoría y búsqueda por nombre
-        public async Task<IActionResult> Index(int? categoriaId, string? busqueda)
+        // Listado con filtro por categoría, búsqueda por nombre y paginación
+        public async Task<IActionResult> Index(int? categoriaId, string? busqueda, int? page)
         {
             var productos = await _serviceProducto.ListAsync();
             var categorias = await _serviceCategoria.ListAsync();
@@ -48,7 +52,8 @@ namespace Sal_Fuego.Controllers
             ViewBag.CategoriaSeleccionada = categoriaId;
             ViewBag.Busqueda = busqueda;
 
-            return View(productos);
+            var paginado = productos.ToPagedList(page ?? 1, TamanoPagina);
+            return View(paginado);
         }
 
         [HttpGet]

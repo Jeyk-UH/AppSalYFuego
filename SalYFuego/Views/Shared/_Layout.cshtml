@@ -6,6 +6,9 @@
     <title>@ViewData["Title"] - Sal y Fuego</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+    <!-- Sweet Alert -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.4/dist/sweetalert2.min.css" />
 </head>
 <body>
 
@@ -21,6 +24,14 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Sweet Alert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.4/dist/sweetalert2.all.min.js"></script>
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <partial name="_Notificaciones" />
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

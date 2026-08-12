@@ -1,10 +1,14 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Sal_Fuego.Aplication.Services.Interfaces;
+using X.PagedList;
+using X.PagedList.Extensions;
 
 namespace Sal_Fuego.Web.Controllers
 {
     public class ProductoController : Controller
     {
+        private const int TamanoPagina = 12;
+
         // Inyectamos nuestro servicio de productos
         private readonly IServiceProducto _service;
         private readonly IServiceMenu _serviceMenu;
@@ -17,11 +21,12 @@ namespace Sal_Fuego.Web.Controllers
 
         // Acción para listar los productos: solo los activos y que estén
         // dentro del menú disponible en este momento (según hora/día actual)
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int? page)
         {
             var menuDisponible = await _serviceMenu.GetMenuDisponibleAsync();
             if (menuDisponible == null)
-                return View(Enumerable.Empty<Sal_Fuego.Aplication.DTOs.ProductoDTO>());
+                return View(Enumerable.Empty<Sal_Fuego.Aplication.DTOs.ProductoDTO>()
+                    .ToPagedList(page ?? 1, TamanoPagina));
 
             var idsDisponibles = menuDisponible.Items
                 .Where(i => i.Tipo == "Producto" && i.IdProducto.HasValue)
@@ -33,7 +38,7 @@ namespace Sal_Fuego.Web.Controllers
                 .Where(p => p.Activo && idsDisponibles.Contains(p.IdProducto))
                 .ToList();
 
-            return View(disponibles); // Pasa la lista de DTOs a la vista Index.cshtml
+            return View(disponibles.ToPagedList(page ?? 1, TamanoPagina));
         }
 
         // Acción para el detalle de un producto
