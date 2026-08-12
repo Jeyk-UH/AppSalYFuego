@@ -11,6 +11,6 @@ namespace Sal_Fuego.Infraestructure.Repository.Interfaces
         //Mantenimientos
         Task AddAsync(Producto producto);
         Task UpdateAsync(Producto producto);
-        Task DeleteAsync(Producto producto);
+        Task DesactivarAsync(Producto producto);
     }
 }

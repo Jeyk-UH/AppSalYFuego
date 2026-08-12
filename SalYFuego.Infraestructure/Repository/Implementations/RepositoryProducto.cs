@@ -49,10 +49,12 @@ namespace Sal_Fuego.Infraestructure.Repository.Implementations
             await _context.SaveChangesAsync();
         }
 
-        // Eliminar producto
-        public async Task DeleteAsync(Producto producto)
+        // Desactivar producto
+        // Toggle activo/inactivo
+        public async Task DesactivarAsync(Producto producto)
         {
-            _context.Set<Producto>().Remove(producto);
+            producto.Activo = !producto.Activo;
+            _context.Set<Producto>().Update(producto);
             await _context.SaveChangesAsync();
         }
     }

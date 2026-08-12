@@ -82,17 +82,35 @@
                            asp-action="Editar"
                            asp-route-id="@item.IdProducto"
                            class="btn btn-sm btn-outline-warning">
-                            ✏️ Editar
+                            Editar
                         </a>
                         <form asp-controller="AdminProducto"
                               asp-action="Eliminar"
                               method="post" class="d-inline"
-                              onsubmit="return confirm('¿Eliminar este producto?')">
+                              onsubmit="return confirm('¿Desactivar este producto?')">
                             <input type="hidden" name="id" value="@item.IdProducto" />
                             @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-sm btn-outline-danger">
-                                🗑️ Eliminar
-                            </button>
+                            <form asp-controller="AdminProducto"
+                                  asp-action="Eliminar"
+                                  method="post" class="d-inline"
+                                  onsubmit="return confirm('@(item.Activo ? "¿Desactivar este producto?" : "¿Activar este producto?")')">
+                                <input type="hidden" name="id" value="@item.IdProducto" />
+                                @Html.AntiForgeryToken()
+
+                                @if (item.Activo)
+                                {
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        Desactivar
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button type="submit" class="btn btn-sm btn-outline-success">
+                                        Activar
+                                    </button>
+                                }
+                            </form>
+
                         </form>
                     </td>
                 </tr>

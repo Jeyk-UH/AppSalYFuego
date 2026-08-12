@@ -23,6 +23,14 @@ namespace Sal_Fuego.Aplication.Profiles
                 .ForMember(dest => dest.Productos,
                     opt => opt.MapFrom(src => src.ComboProducto))
                 .ReverseMap();
+            CreateMap<Combo, ComboDTO>()
+                .ForMember(dest => dest.CategoriaNombre,
+                    opt => opt.MapFrom(src => src.IdCategoriaNavigation.Nombre))
+                .ForMember(dest => dest.IdCategoria,
+                    opt => opt.MapFrom(src => src.IdCategoria))  // agregá este
+                .ForMember(dest => dest.Productos,
+                    opt => opt.MapFrom(src => src.ComboProducto))
+                .ReverseMap();
         }
     }
 }

@@ -1,10 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Sal_Fuego.Aplication.Config;
 using Sal_Fuego.Aplication.DTOs;
 using Sal_Fuego.Aplication.Services.Interfaces;
 
 namespace Sal_Fuego.Controllers
 {
+    [Authorize(Roles = Roles.Administrador)]
     public class AdminProductoController : Controller
     {
         private readonly IServiceProducto _serviceProducto;
@@ -99,8 +102,8 @@ namespace Sal_Fuego.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Eliminar(int id)
         {
-            await _serviceProducto.DeleteAsync(id);
-            TempData["Exito"] = "Producto eliminado correctamente.";
+            await _serviceProducto.DesactivarAsync(id);
+            TempData["Exito"] = "Estado del producto actualizado correctamente.";
             return RedirectToAction(nameof(Index));
         }
 

@@ -1,0 +1,79 @@
+@model IEnumerable<Sal_Fuego.Aplication.DTOs.UsuarioDTO>
+
+@{
+    ViewData["Title"] = "Gestión de Usuarios";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>Gestión de Usuarios</h1>
+        <a asp-controller="AdminUsuario" asp-action="Agregar" class="btn btn-success">
+            + Agregar Usuario
+        </a>
+    </div>
+
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            @TempData["Exito"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <table class="table table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Nombre</th>
+                <th>Correo</th>
+                <th>Rol</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.NombreCompleto</td>
+                    <td>@item.Correo</td>
+                    <td><span class="badge bg-dark">@item.NombreRol</span></td>
+                    <td>
+                        @if (item.Activo)
+                        {
+                            <span class="badge bg-success">Activo</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Inactivo</span>
+                        }
+                    </td>
+                    <td>
+                        <a asp-controller="AdminUsuario" asp-action="Editar"
+                           asp-route-id="@item.IdUsuario"
+                           class="btn btn-sm btn-outline-warning">
+                            Editar
+                        </a>
+                        <form asp-controller="AdminUsuario" asp-action="Eliminar"
+                              method="post" class="d-inline"
+                              onsubmit="return confirm('@(item.Activo ? "¿Desactivar este usuario?" : "¿Activar este usuario?")')">
+                            <input type="hidden" name="id" value="@item.IdUsuario" />
+                            @Html.AntiForgeryToken()
+                            @if (item.Activo)
+                            {
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    Desactivar
+                                </button>
+                            }
+                            else
+                            {
+                                <button type="submit" class="btn btn-sm btn-outline-success">
+                                    Activar
+                                </button>
+                            }
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

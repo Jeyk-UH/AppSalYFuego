@@ -1,0 +1,57 @@
+@model Sal_Fuego.Aplication.DTOs.LoginDTO
+
+@{
+    ViewData["Title"] = "Iniciar Sesión";
+}
+
+<div class="container mt-5" style="max-width: 420px;">
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+            <h2 class="text-center mb-4" style="color:#1a1a1a;">Iniciar Sesión</h2>
+
+            @if (!string.IsNullOrEmpty(ViewBag.Message))
+            {
+                <div class="alert alert-danger">@ViewBag.Message</div>
+            }
+
+            @if (TempData["Exito"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show">
+                    @TempData["Exito"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <form asp-controller="Login" asp-action="Index" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Correo" class="form-label">Correo</label>
+                    <input asp-for="Correo" class="form-control" placeholder="correo@ejemplo.com" />
+                    <span asp-validation-for="Correo" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Password" class="form-label">Contraseña</label>
+                    <input asp-for="Password" class="form-control" type="password" />
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+
+                <button type="submit" class="btn w-100 fw-bold"
+                        style="background-color:#f5a623; color:#1a1a1a;">
+                    INGRESAR
+                </button>
+            </form>
+
+            <p class="text-center mt-3 mb-0 small">
+                ¿No tenés cuenta?
+                <a asp-controller="Login" asp-action="Registro">Registrate aquí</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

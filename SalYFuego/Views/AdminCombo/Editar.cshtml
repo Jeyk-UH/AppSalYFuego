@@ -1,0 +1,224 @@
+﻿@model Sal_Fuego.Aplication.DTOs.ComboFormDTO
+
+@{
+    ViewData["Title"] = "Editar Combo";
+    var todosProductos = ViewBag.TodosProductos
+        as IEnumerable<Sal_Fuego.Aplication.DTOs.ProductoDTO>;
+}
+
+<div class="container mt-4" style="max-width: 800px;">
+    <h2>Editar Combo</h2>
+    <hr />
+
+    <form asp-controller="AdminCombo" asp-action="Editar"
+          method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="IdCombo" />
+
+        <div class="mb-3">
+            <label asp-for="Nombre" class="form-label">Nombre</label>
+            <input asp-for="Nombre" class="form-control" />
+            <span asp-validation-for="Nombre" class="text-danger small"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Descripcion" class="form-label">Descripción</label>
+            <textarea asp-for="Descripcion" class="form-control" rows="3"></textarea>
+            <span asp-validation-for="Descripcion" class="text-danger small"></span>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="PrecioEspecial" class="form-label">Precio Especial (₡)</label>
+                <input asp-for="PrecioEspecial" class="form-control"
+                       type="number" step="0.01" />
+                <span asp-validation-for="PrecioEspecial" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="IdCategoria" class="form-label">Categoría</label>
+                <select asp-for="IdCategoria" asp-items="ViewBag.Categorias"
+                        class="form-select">
+                    <option value="">-- Seleccione --</option>
+                </select>
+                <span asp-validation-for="IdCategoria" class="text-danger small"></span>
+            </div>
+        </div>
+
+        <div class="mb-3 form-check">
+            <input asp-for="Activo" class="form-check-input" type="checkbox" />
+            <label asp-for="Activo" class="form-check-label">Combo activo</label>
+        </div>
+
+        <div class="mb-4">
+            <label asp-for="ImagenFile" class="form-label">
+                Imagen del combo
+                <small class="text-muted">(dejá vacío para mantener la actual)</small>
+            </label>
+            <input asp-for="ImagenFile" class="form-control" type="file"
+                   accept="image/*" onchange="previewImagen(this)" />
+            @if (!string.IsNullOrEmpty(Model.UrlImagenActual))
+            {
+                <img id="preview" src="@Model.UrlImagenActual"
+                     class="mt-2"
+                     style="height:120px; border-radius:8px; object-fit:cover;">
+            }
+            else
+            {
+                <img id="preview" src="#" alt="Preview"
+                     class="mt-2 d-none"
+                     style="height:120px; border-radius:8px; object-fit:cover;">
+            }
+        </div>
+
+        <!-- Selector de Productos -->
+        <div class="mb-4">
+            <label class="form-label fw-bold">Productos del Combo</label>
+            <div class="border rounded p-3">
+                <input type="text" id="buscadorProducto"
+                       class="form-control mb-3"
+                       placeholder="Buscar producto..."
+                       onkeyup="filtrarProductos()" />
+
+                <div class="row g-2" id="gridProductos">
+                    @if (todosProductos != null)
+                    {
+                        @foreach (var prod in todosProductos)
+                        {
+                            <div class="col-md-4 producto-item"
+                                 data-nombre="@prod.Nombre.ToLower()"
+                                 data-id="@prod.IdProducto">
+                                <button type="button"
+                                        class="btn btn-outline-secondary btn-sm w-100 text-start"
+                                        data-id="@prod.IdProducto"
+                                        data-nombre="@prod.Nombre"
+                                        onclick="agregarProducto(@prod.IdProducto, '@prod.Nombre', 1)">
+                                    + @prod.Nombre
+                                </button>
+                            </div>
+                        }
+                    }
+                </div>
+
+                <hr />
+                <p class="text-muted small mb-2">Productos seleccionados:</p>
+                <div id="productosSeleccionados"
+                     class="d-flex flex-wrap gap-2"
+                     style="min-height: 40px;"></div>
+                <div id="inputsProductos"></div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-warning">Actualizar</button>
+            <a asp-controller="AdminCombo" asp-action="Index"
+               class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        function previewImagen(input) {
+            const preview = document.getElementById('preview');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    preview.src = e.target.result;
+                    preview.classList.remove('d-none');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function filtrarProductos() {
+            const busqueda = document.getElementById('buscadorProducto')
+                .value.toLowerCase();
+            document.querySelectorAll('.producto-item').forEach(item => {
+                item.style.display = item.dataset.nombre.includes(busqueda)
+                    ? '' : 'none';
+            });
+        }
+
+        const seleccionados = new Set();
+        let contador = 0;
+
+        function agregarProducto(id, nombre, cantidad) {
+            if (seleccionados.has(id)) return;
+            seleccionados.add(id);
+
+            const index = contador++;
+
+            const chip = document.createElement('div');
+            chip.className = 'badge d-flex align-items-center gap-2 p-2';
+            chip.style.cssText = 'background-color:#f5a623; color:#1a1a1a; font-size:0.85rem;';
+            chip.id = 'chip-' + id;
+            chip.innerHTML =
+                nombre +
+                ' <input type="number" min="1" value="' + (cantidad || 1) + '"' +
+                ' id="cant-' + id + '"' +
+                ' style="width:50px; font-size:0.8rem;"' +
+                ' class="form-control form-control-sm p-0 text-center"' +
+                ' onchange="actualizarCantidad(' + id + ', this.value)" />' +
+                ' <span style="cursor:pointer; font-size:1rem;"' +
+                ' onclick="quitarProducto(' + id + ')">&times;</span>';
+
+            document.getElementById('productosSeleccionados').appendChild(chip);
+
+            const inputId = document.createElement('input');
+            inputId.type = 'hidden';
+            inputId.name = 'ProductosSeleccionados[' + index + '].IdProducto';
+            inputId.value = id;
+            inputId.id = 'input-id-' + id;
+
+            const inputNombre = document.createElement('input');
+            inputNombre.type = 'hidden';
+            inputNombre.name = 'ProductosSeleccionados[' + index + '].NombreProducto';
+            inputNombre.value = nombre;
+            inputNombre.id = 'input-nombre-' + id;
+
+            const inputCant = document.createElement('input');
+            inputCant.type = 'hidden';
+            inputCant.name = 'ProductosSeleccionados[' + index + '].Cantidad';
+            inputCant.value = cantidad || 1;
+            inputCant.id = 'input-cant-' + id;
+
+            document.getElementById('inputsProductos').appendChild(inputId);
+            document.getElementById('inputsProductos').appendChild(inputNombre);
+            document.getElementById('inputsProductos').appendChild(inputCant);
+        }
+
+        function actualizarCantidad(id, valor) {
+            const input = document.getElementById('input-cant-' + id);
+            if (input) input.value = valor;
+        }
+
+        function quitarProducto(id) {
+            seleccionados.delete(id);
+            document.getElementById('chip-' + id)?.remove();
+            document.getElementById('input-id-' + id)?.remove();
+            document.getElementById('input-nombre-' + id)?.remove();
+            document.getElementById('input-cant-' + id)?.remove();
+        }
+
+        // Cargar productos ya seleccionados desde la BD
+        document.addEventListener('DOMContentLoaded', function () {
+            var productosActuales = @Html.Raw(
+                            System.Text.Json.JsonSerializer.Serialize(
+                                    Model.ProductosSeleccionados,
+                                    new System.Text.Json.JsonSerializerOptions
+                                    {
+                                            PropertyNamingPolicy = null
+                                    }));
+
+            productosActuales.forEach(function (p) {
+                var item = document.querySelector(
+                    '.producto-item[data-id="' + p.IdProducto + '"]');
+                if (item) {
+                    var btn = item.querySelector('button');
+                    var nombre = btn ? btn.getAttribute('data-nombre') : '';
+                    agregarProducto(p.IdProducto, nombre, p.Cantidad);
+                }
+            });
+        });
+    </script>
+}

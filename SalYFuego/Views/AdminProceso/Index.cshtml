@@ -1,0 +1,73 @@
+﻿@model IEnumerable<Sal_Fuego.Aplication.DTOs.ProcesoDTO>
+
+@{
+    ViewData["Title"] = "Gestión de Procesos de Preparación";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>Procesos de Preparación</h1>
+        <a asp-controller="AdminProceso" asp-action="Agregar"
+           class="btn btn-success">
+            + Agregar Proceso
+        </a>
+    </div>
+
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            @TempData["Exito"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <table class="table table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Producto</th>
+                <th>Cantidad de Pasos</th>
+                <th>Estaciones</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.NombreProducto</td>
+                    <td>
+                        <span class="badge bg-primary">
+                            @item.CantidadPasos @(item.CantidadPasos == 1 ? "paso" : "pasos")
+                        </span>
+                    </td>
+                    <td>
+                        @foreach (var paso in item.Pasos.OrderBy(p => p.OrdenPaso))
+                        {
+                            <span class="badge bg-secondary me-1">
+                                @paso.OrdenPaso. @paso.NombreEstacion
+                            </span>
+                        }
+                    </td>
+                    <td>
+                        <a asp-controller="AdminProceso"
+                           asp-action="Editar"
+                           asp-route-id="@item.IdProducto"
+                           class="btn btn-sm btn-outline-warning">
+                            Editar
+                        </a>
+                        <form asp-controller="AdminProceso"
+                              asp-action="Eliminar"
+                              method="post" class="d-inline"
+                              onsubmit="return confirm('¿Eliminar este proceso?')">
+                            <input type="hidden" name="id" value="@item.IdProducto" />
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                Eliminar
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

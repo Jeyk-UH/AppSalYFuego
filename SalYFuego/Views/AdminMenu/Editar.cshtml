@@ -1,0 +1,317 @@
+﻿@model Sal_Fuego.Aplication.DTOs.MenuFormDTO
+
+@{
+    ViewData["Title"] = "Editar Menú";
+    var todosProductos = ViewBag.TodosProductos
+        as IEnumerable<Sal_Fuego.Aplication.DTOs.ProductoDTO>;
+    var todosCombos = ViewBag.TodosCombos
+        as IEnumerable<Sal_Fuego.Aplication.DTOs.ComboDTO>;
+}
+
+<div class="container mt-4" style="max-width: 800px;">
+    <h2>Editar Menú</h2>
+    <hr />
+
+    <form asp-controller="AdminMenu" asp-action="Editar" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="IdMenu" />
+
+        <!-- Nombre -->
+        <div class="mb-3">
+            <label asp-for="Nombre" class="form-label">Nombre</label>
+            <input asp-for="Nombre" class="form-control" />
+            <span asp-validation-for="Nombre" class="text-danger small"></span>
+        </div>
+
+        <!-- Horario -->
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="HoraInicio" class="form-label">Hora Inicio</label>
+                <input asp-for="HoraInicio" class="form-control" type="time" />
+                <span asp-validation-for="HoraInicio" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="HoraFin" class="form-label">Hora Fin</label>
+                <input asp-for="HoraFin" class="form-control" type="time" />
+                <span asp-validation-for="HoraFin" class="text-danger small"></span>
+            </div>
+        </div>
+
+        <!-- Activo -->
+        <div class="mb-4 form-check">
+            <input asp-for="EstaActivo" class="form-check-input" type="checkbox" />
+            <label asp-for="EstaActivo" class="form-check-label">Menú activo</label>
+        </div>
+
+        <!-- Disponibilidad con toggle -->
+        <div class="mb-4">
+            <label class="form-label fw-bold">Disponibilidad</label>
+            <div class="border rounded p-3">
+
+                <!-- Toggle tipo disponibilidad -->
+                <div class="d-flex gap-3 mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio"
+                               name="TipoDisponibilidad" value="dias"
+                               id="tipoDias" checked
+                               onchange="toggleDisponibilidad('dias')" />
+                        <label class="form-check-label" for="tipoDias">
+                             Por días de semana
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio"
+                               name="TipoDisponibilidad" value="fechas"
+                               id="tipoFechas"
+                               onchange="toggleDisponibilidad('fechas')" />
+                        <label class="form-check-label" for="tipoFechas">
+                             Por rango de fechas
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Panel días de semana -->
+                <div id="panelDias">
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var dia in new[] { "Lunes", "Martes", "Miércoles",
+                            "Jueves", "Viernes", "Sábado", "Domingo" })
+                        {
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox"
+                                       name="DiasSeleccionados"
+                                       value="@dia" id="dia-@dia" />
+                                <label class="form-check-label" for="dia-@dia">
+                                    @dia
+                                </label>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Panel rango de fechas -->
+                <div id="panelFechas" class="d-none">
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
+                            <label asp-for="FechaInicio" class="form-label">
+                                Fecha Inicio
+                            </label>
+                            <input asp-for="FechaInicio" class="form-control"
+                                   type="date" />
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label asp-for="FechaFin" class="form-label">
+                                Fecha Fin
+                            </label>
+                            <input asp-for="FechaFin" class="form-control"
+                                   type="date" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Selector de Productos y Combos con Tabs -->
+        <div class="mb-4">
+            <label class="form-label fw-bold">Productos y Combos del Menú</label>
+            <div class="border rounded p-3">
+
+                <!-- Tabs -->
+                <ul class="nav nav-tabs mb-3" id="tabsItems">
+                    <li class="nav-item">
+                        <button class="nav-link active" type="button"
+                                onclick="mostrarTab('productos')">
+                             Productos
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" type="button"
+                                onclick="mostrarTab('combos')">
+                             Combos
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Panel Productos -->
+                <div id="tabProductos">
+                    <input type="text" id="buscarProducto"
+                           class="form-control mb-3"
+                           placeholder="Buscar producto..."
+                           onkeyup="filtrar('producto')" />
+                    <div class="row g-2" id="gridProductos">
+                        @if (todosProductos != null)
+                        {
+                            @foreach (var prod in todosProductos)
+                            {
+                                <div class="col-md-4 item-producto"
+                                     data-nombre="@prod.Nombre.ToLower()"
+                                     data-id="@prod.IdProducto">
+                                    <button type="button"
+                                            class="btn btn-outline-secondary btn-sm w-100 text-start"
+                                            data-id="@prod.IdProducto"
+                                            data-nombre="@prod.Nombre"
+                                            onclick="agregarItem('producto', @prod.IdProducto, '@prod.Nombre')">
+                                        + @prod.Nombre
+                                    </button>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+
+                <!-- Panel Combos -->
+                <div id="tabCombos" class="d-none">
+                    <input type="text" id="buscarCombo"
+                           class="form-control mb-3"
+                           placeholder="Buscar combo..."
+                           onkeyup="filtrar('combo')" />
+                    <div class="row g-2" id="gridCombos">
+                        @if (todosCombos != null)
+                        {
+                            @foreach (var combo in todosCombos)
+                            {
+                                <div class="col-md-4 item-combo"
+                                     data-nombre="@combo.Nombre.ToLower()"
+                                     data-id="@combo.IdCombo">
+                                    <button type="button"
+                                            class="btn btn-outline-warning btn-sm w-100 text-start"
+                                            data-id="@combo.IdCombo"
+                                            data-nombre="@combo.Nombre"
+                                            onclick="agregarItem('combo', @combo.IdCombo, '@combo.Nombre')">
+                                        + @combo.Nombre
+                                    </button>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+
+                <hr />
+
+                <!-- Chips seleccionados -->
+                <p class="text-muted small mb-2">Items seleccionados:</p>
+                <div id="itemsSeleccionados"
+                     class="d-flex flex-wrap gap-2"
+                     style="min-height: 40px;">
+                </div>
+                <div id="inputsItems"></div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-warning">Actualizar</button>
+            <a asp-controller="AdminMenu" asp-action="Index"
+               class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Toggle disponibilidad
+        function toggleDisponibilidad(tipo) {
+            document.getElementById('panelDias').classList.toggle('d-none', tipo !== 'dias');
+            document.getElementById('panelFechas').classList.toggle('d-none', tipo !== 'fechas');
+        }
+
+        // Tabs productos/combos
+        function mostrarTab(tab) {
+            document.getElementById('tabProductos').classList.toggle('d-none', tab !== 'productos');
+            document.getElementById('tabCombos').classList.toggle('d-none', tab !== 'combos');
+
+            document.querySelectorAll('#tabsItems .nav-link').forEach((btn, i) => {
+                btn.classList.toggle('active',
+                    (tab === 'productos' && i === 0) ||
+                    (tab === 'combos' && i === 1));
+            });
+        }
+
+        // Filtrar items
+        function filtrar(tipo) {
+            const busqueda = document.getElementById(
+                tipo === 'producto' ? 'buscarProducto' : 'buscarCombo')
+                .value.toLowerCase();
+            document.querySelectorAll(
+                tipo === 'producto' ? '.item-producto' : '.item-combo')
+                .forEach(item => {
+                    item.style.display = item.dataset.nombre.includes(busqueda)
+                        ? '' : 'none';
+                });
+        }
+
+        const selProductos = new Set();
+        const selCombos = new Set();
+
+        function agregarItem(tipo, id, nombre) {
+            const set = tipo === 'producto' ? selProductos : selCombos;
+            if (set.has(id)) return;
+            set.add(id);
+
+            // Chip
+            const color = tipo === 'producto' ? '#f5a623' : '#198754';
+            const textColor = tipo === 'producto' ? '#1a1a1a' : '#fff';
+            const chip = document.createElement('div');
+            chip.className = 'badge d-flex align-items-center gap-1 p-2';
+            chip.style.cssText = `background-color:${color}; color:${textColor}; font-size:0.85rem;`;
+            chip.id = `chip-${tipo}-${id}`;
+            chip.innerHTML = `
+                ${tipo === 'combo' ? ' ' : ''}${nombre}
+                <span style="cursor:pointer; font-size:1rem;"
+                      onclick="quitarItem('${tipo}', ${id})">&times;</span>`;
+
+            document.getElementById('itemsSeleccionados').appendChild(chip);
+
+            // Input hidden
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = tipo === 'producto'
+                ? 'ProductosSeleccionados'
+                : 'CombosSeleccionados';
+            input.value = id;
+            input.id = `input-${tipo}-${id}`;
+            document.getElementById('inputsItems').appendChild(input);
+        }
+
+        function quitarItem(tipo, id) {
+            const set = tipo === 'producto' ? selProductos : selCombos;
+            set.delete(id);
+            document.getElementById(`chip-${tipo}-${id}`)?.remove();
+            document.getElementById(`input-${tipo}-${id}`)?.remove();
+        }
+
+        // Cargar items ya seleccionados desde la BD
+        document.addEventListener('DOMContentLoaded', function () {
+            var productosActuales = [@string.Join(",", Model.ProductosSeleccionados)];
+            var combosActuales = [@string.Join(",", Model.CombosSeleccionados)];
+
+            productosActuales.forEach(function (id) {
+                var item = document.querySelector('.item-producto[data-id="' + id + '"]');
+                if (item) {
+                    var btn = item.querySelector('button');
+                    if (btn) agregarItem('producto', id, btn.getAttribute('data-nombre'));
+                }
+            });
+
+            combosActuales.forEach(function (id) {
+                var item = document.querySelector('.item-combo[data-id="' + id + '"]');
+                if (item) {
+                    var btn = item.querySelector('button');
+                    if (btn) agregarItem('combo', id, btn.getAttribute('data-nombre'));
+                }
+            });
+
+            // Cargar tipo de disponibilidad
+            var tipo = '@Model.TipoDisponibilidad';
+            if (tipo === 'fechas') {
+                document.getElementById('tipoFechas').checked = true;
+                toggleDisponibilidad('fechas');
+            }
+
+            // Marcar días seleccionados
+            var dias = [@Html.Raw(string.Join(",", Model.DiasSeleccionados.Select(d => $"'{d}'")))];
+            dias.forEach(function (dia) {
+                var check = document.getElementById('dia-' + dia);
+                if (check) check.checked = true;
+            });
+        });
+    </script>
+}

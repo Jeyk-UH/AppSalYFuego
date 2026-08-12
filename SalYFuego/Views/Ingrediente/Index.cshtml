@@ -38,14 +38,14 @@
                         <a asp-action="Editar"
                            asp-route-id="@item.IdIngrediente"
                            class="btn btn-sm btn-outline-warning">
-                            ✏️ Editar
+                            Editar
                         </a>
                         <form asp-action="Eliminar" method="post" class="d-inline"
                               onsubmit="return confirm('¿Estás seguro de eliminar este ingrediente?')">
                             <input type="hidden" name="id" value="@item.IdIngrediente" />
                             @Html.AntiForgeryToken()
                             <button type="submit" class="btn btn-sm btn-outline-danger">
-                                🗑️ Eliminar
+                                Eliminar
                             </button>
                         </form>
                     </td>

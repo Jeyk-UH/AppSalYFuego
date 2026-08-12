@@ -1,0 +1,157 @@
+﻿@model Sal_Fuego.Aplication.DTOs.ProcesoFormDTO
+
+@{
+    ViewData["Title"] = "Agregar Proceso";
+    var estacionesList = ViewBag.Estaciones
+        as IEnumerable<Sal_Fuego.Aplication.DTOs.EstacionDTO>;
+}
+
+<div class="container mt-4" style="max-width: 800px;">
+    <h2>Agregar Proceso de Preparación</h2>
+    <hr />
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <form asp-controller="AdminProceso" asp-action="Agregar" method="post">
+        @Html.AntiForgeryToken()
+
+        <!-- Producto -->
+        <div class="mb-4">
+            <label asp-for="IdProducto" class="form-label fw-bold">Producto</label>
+            <select asp-for="IdProducto" class="form-select">
+                <option value="">-- Seleccione un producto --</option>
+                @foreach (var item in (IEnumerable<SelectListItem>)ViewBag.Productos)
+                {
+                    <option value="@item.Value">@item.Text</option>
+                }
+            </select>
+            <span asp-validation-for="IdProducto" class="text-danger small"></span>
+        </div>
+
+        <!-- Pasos del proceso -->
+        <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <label class="form-label fw-bold mb-0">
+                    Pasos de Preparación
+                </label>
+                <button type="button" class="btn btn-sm btn-outline-success"
+                        onclick="agregarPaso(null, null)">
+                    + Agregar Paso
+                </button>
+            </div>
+
+            <div id="contenedorPasos"></div>
+            <div id="inputsPasos"></div>
+        </div>
+
+        <!-- Template de estaciones para el JS -->
+        <div id="estacionesData" class="d-none">
+            @if (estacionesList != null)
+            {
+                @foreach (var est in estacionesList)
+                {
+                    <span data-id="@est.IdEstacion"
+                          data-nombre="@est.Nombre"></span>
+                }
+            }
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-success">Guardar</button>
+            <a asp-controller="AdminProceso" asp-action="Index"
+               class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        let contadorPasos = 0;
+
+        function getEstaciones() {
+            const spans = document.querySelectorAll('#estacionesData span');
+            return Array.from(spans).map(s => ({
+                id: s.getAttribute('data-id'),
+                nombre: s.getAttribute('data-nombre')
+            }));
+        }
+
+        function buildSelectEstaciones(index, selectedId) {
+            const estaciones = getEstaciones();
+            let options = '<option value="">-- Estación --</option>';
+            estaciones.forEach(e => {
+                const sel = String(e.id) === String(selectedId) ? 'selected' : '';
+                options += '<option value="' + e.id + '" ' + sel + '>'
+                    + e.nombre + '</option>';
+            });
+            return '<select name="Pasos[' + index + '].IdEstacion" '
+                + 'class="form-select form-select-sm" required>'
+                + options + '</select>';
+        }
+
+        function agregarPaso(idEstacion, tiempo) {
+            const index = contadorPasos++;
+            const numero = document.querySelectorAll(
+                '#contenedorPasos .card').length + 1;
+
+            const div = document.createElement('div');
+            div.className = 'card mb-2';
+            div.id = 'paso-' + index;
+            div.setAttribute('data-index', index);
+            div.innerHTML =
+                '<div class="card-body p-3">' +
+                    '<div class="d-flex align-items-center gap-3">' +
+                        '<span class="badge bg-warning text-dark fs-6" ' +
+                              'style="min-width:35px;">' + numero + '</span>' +
+                        '<div style="flex:2;">' +
+                            '<label class="form-label small mb-1">Estación</label>' +
+                            buildSelectEstaciones(index, idEstacion || '') +
+                        '</div>' +
+                        '<div style="flex:1;">' +
+                            '<label class="form-label small mb-1">Tiempo (min)</label>' +
+                            '<input type="number" min="1" ' +
+                                   'name="Pasos[' + index + '].TiempoEstimadoMinutos" ' +
+                                   'value="' + (tiempo || '') + '" ' +
+                                   'class="form-control form-control-sm" ' +
+                                   'placeholder="Ej: 10" required />' +
+                        '</div>' +
+                        '<div>' +
+                            '<button type="button" ' +
+                                    'class="btn btn-sm btn-outline-danger mt-3" ' +
+                                    'onclick="quitarPaso(\'paso-' + index + '\')">' +
+                                'Quitar' +
+                            '</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+
+            document.getElementById('contenedorPasos').appendChild(div);
+        }
+
+        function quitarPaso(pasoId) {
+            document.getElementById(pasoId)?.remove();
+            reindexarPasos();
+        }
+
+        // Reindexar todos los pasos para que no queden huecos
+        function reindexarPasos() {
+            const cards = document.querySelectorAll('#contenedorPasos .card');
+            cards.forEach((card, i) => {
+                // Actualizar número del badge
+                const badge = card.querySelector('.badge');
+                if (badge) badge.textContent = i + 1;
+
+                // Actualizar name del select de estación
+                const select = card.querySelector('select');
+                if (select) select.name = 'Pasos[' + i + '].IdEstacion';
+
+                // Actualizar name del input de tiempo
+                const input = card.querySelector('input[type="number"]');
+                if (input) input.name = 'Pasos[' + i + '].TiempoEstimadoMinutos';
+            });
+        }
+    </script>
+}

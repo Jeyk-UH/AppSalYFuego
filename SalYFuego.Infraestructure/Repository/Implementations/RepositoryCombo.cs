@@ -14,23 +14,47 @@ namespace Sal_Fuego.Infraestructure.Repository.Implementations
             _context = context;
         }
 
-        // Obtener todos los combos activos con categoria e imagen
+        // Obtener todos los combos con categoria y productos
         public async Task<ICollection<Combo>> ListAsync()
         {
             return await _context.Set<Combo>()
-                .Where(c => c.Activo == true)
                 .Include(c => c.IdCategoriaNavigation)
+                .Include(c => c.ComboProducto)
+                    .ThenInclude(cp => cp.IdProductoNavigation)
+                .OrderBy(c => c.Nombre)
                 .ToListAsync();
         }
 
-        // Obtener combo por id con productos que lo componen
-        public async Task<Combo> FindByIdAsync(int id)
+        // Obtener combo por id con todas sus relaciones
+        public async Task<Combo?> FindByIdAsync(int id)
         {
             return await _context.Set<Combo>()
                 .Include(c => c.IdCategoriaNavigation)
                 .Include(c => c.ComboProducto)
                     .ThenInclude(cp => cp.IdProductoNavigation)
                 .FirstOrDefaultAsync(c => c.IdCombo == id);
+        }
+
+        // Agregar nuevo combo
+        public async Task AddAsync(Combo combo)
+        {
+            await _context.Set<Combo>().AddAsync(combo);
+            await _context.SaveChangesAsync();
+        }
+
+        // Actualizar combo existente
+        public async Task UpdateAsync(Combo combo)
+        {
+            _context.Set<Combo>().Update(combo);
+            await _context.SaveChangesAsync();
+        }
+
+        // Desactivar combo en vez de eliminarlo
+        public async Task DesactivarAsync(Combo combo)
+        {
+            combo.Activo = !combo.Activo;
+            _context.Set<Combo>().Update(combo);
+            await _context.SaveChangesAsync();
         }
     }
 }

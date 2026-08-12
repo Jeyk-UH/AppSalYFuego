@@ -154,12 +154,12 @@ namespace Sal_Fuego.Aplication.Services.Implementations
             await _repository.UpdateAsync(producto);
         }
 
-        // Eliminar producto
-        public async Task DeleteAsync(int id)
+        // Desactivar producto por id
+        public async Task DesactivarAsync(int id)
         {
             var producto = await _repository.FindByIdAsync(id);
             if (producto != null)
-                await _repository.DeleteAsync(producto);
+                await _repository.DesactivarAsync(producto);
         }
     }
 }

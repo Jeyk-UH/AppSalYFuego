@@ -5,9 +5,17 @@ namespace Sal_Fuego.Infraestructure.Repository.Interfaces
 {
     public interface IRepositoryMenu
     {
-        // Obtener todos los menús
+        // Obtener lista de menus
         Task<ICollection<Menu>> ListAsync();
-        // Obtener el menú disponible según día y hora actual
+        // Obtener menu por id
+        Task<Menu?> FindByIdAsync(int id);
+        // Obtener menu disponible
         Task<Menu?> GetMenuDisponibleAsync();
+        // Agregar menu
+        Task AddAsync(Menu menu);
+        // Actualizar menu
+        Task UpdateAsync(Menu menu);
+        // Desactivar menu
+        Task DesactivarAsync(Menu menu);
     }
 }

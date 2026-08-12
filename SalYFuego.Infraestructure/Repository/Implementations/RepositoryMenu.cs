@@ -14,23 +14,38 @@ namespace Sal_Fuego.Infraestructure.Repository.Implementations
             _context = context;
         }
 
-        // Obtener todos los menús ordenados por disponibilidad más reciente
+        // Obtener todos los menús con disponibilidad e items
         public async Task<ICollection<Menu>> ListAsync()
         {
             return await _context.Set<Menu>()
                 .Include(m => m.MenuDisponibilidad)
+                .Include(m => m.MenuItem)
+                    .ThenInclude(mi => mi.IdProductoNavigation)
+                .Include(m => m.MenuItem)
+                    .ThenInclude(mi => mi.IdComboNavigation)
                 .OrderByDescending(m => m.MenuDisponibilidad
                     .Max(d => d.FechaInicio ?? DateOnly.MinValue))
                 .ToListAsync();
         }
 
-        // Obtener el menú disponible según fecha y hora actual
-        public async Task<Menu> GetMenuDisponibleAsync()
+        // Obtener menú por id con todas sus relaciones
+        public async Task<Menu?> FindByIdAsync(int id)
+        {
+            return await _context.Set<Menu>()
+                .Include(m => m.MenuDisponibilidad)
+                .Include(m => m.MenuItem)
+                    .ThenInclude(mi => mi.IdProductoNavigation)
+                .Include(m => m.MenuItem)
+                    .ThenInclude(mi => mi.IdComboNavigation)
+                .FirstOrDefaultAsync(m => m.IdMenu == id);
+        }
+
+        // Obtener menú disponible según fecha y hora actual
+        public async Task<Menu?> GetMenuDisponibleAsync()
         {
             var ahora = DateTime.Now;
             var horaActual = TimeOnly.FromDateTime(ahora);
             var fechaActual = DateOnly.FromDateTime(ahora);
-            // Nombre del día actual en español
             var diasSemana = new Dictionary<DayOfWeek, string>
             {
                 { DayOfWeek.Monday,    "Lunes"     },
@@ -58,12 +73,47 @@ namespace Sal_Fuego.Infraestructure.Repository.Implementations
                     m.HoraInicio <= horaActual &&
                     m.HoraFin >= horaActual &&
                     m.MenuDisponibilidad.Any(d =>
-                        // Por día de semana
                         (d.DiaSemana == diaActual && d.FechaInicio == null) ||
-                        // Por rango de fechas
                         (d.FechaInicio <= fechaActual && d.FechaFin >= fechaActual)
                     ))
                 .FirstOrDefaultAsync();
+        }
+
+        // Agregar nuevo menú
+        public async Task AddAsync(Menu menu)
+        {
+            await _context.Set<Menu>().AddAsync(menu);
+            await _context.SaveChangesAsync();
+        }
+
+        // Actualizar menú existente
+        // Actualizar menú existente
+        public async Task UpdateAsync(Menu menu)
+        {
+            // Eliminar disponibilidades e items existentes antes de actualizar
+            var disponibilidades = await _context.Set<MenuDisponibilidad>()
+                .Where(d => d.IdMenu == menu.IdMenu)
+                .ToListAsync();
+            _context.Set<MenuDisponibilidad>().RemoveRange(disponibilidades);
+
+            var items = await _context.Set<MenuItem>()
+                .Where(i => i.IdMenu == menu.IdMenu)
+                .ToListAsync();
+            _context.Set<MenuItem>().RemoveRange(items);
+
+            await _context.SaveChangesAsync();
+
+            // Ahora actualizar el menú con los nuevos datos
+            _context.Set<Menu>().Update(menu);
+            await _context.SaveChangesAsync();
+        }
+
+        // Desactivar menú
+        public async Task DesactivarAsync(Menu menu)
+        {
+            menu.EstaActivo = !menu.EstaActivo;
+            _context.Set<Menu>().Update(menu);
+            await _context.SaveChangesAsync();
         }
     }
 }

@@ -1,4 +1,16 @@
-﻿<nav class="navbar navbar-expand-lg shadow-sm"
+@using Sal_Fuego.Aplication.Config
+
+@{
+    bool autenticado = User.Identity?.IsAuthenticated == true;
+    bool esAdmin = User.IsInRole(Roles.Administrador);
+    bool esOperativo = User.IsInRole(Roles.Encargado) || User.IsInRole(Roles.Cocina)
+        || User.IsInRole(Roles.Salonero) || User.IsInRole(Roles.Repartidor);
+    // El catálogo (productos, combos, menús) se muestra a público, Cliente y Administrador.
+    // Los roles operativos (Caja, Cocina, Salón, Repartidor) solo ven su propio panel.
+    bool mostrarCatalogo = !esOperativo;
+}
+
+<nav class="navbar navbar-expand-lg shadow-sm"
      style="background-color: #ffffff; border-bottom: 3px solid #f5a623;">
     <div class="container">
         <!-- Logo -->
@@ -26,79 +38,200 @@
                         INICIO
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link px-3 py-2 rounded"
-                       style="color: #333; letter-spacing:1px; font-size:0.85rem;"
-                       asp-controller="Producto" asp-action="Index">
-                        PRODUCTOS
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link px-3 py-2 rounded"
-                       style="color: #333; letter-spacing:1px; font-size:0.85rem;"
-                       asp-controller="Combo" asp-action="Index">
-                        COMBOS
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link px-3 py-2 rounded"
-                       style="color: #333; letter-spacing:1px; font-size:0.85rem;"
-                       asp-controller="Menu" asp-action="Index">
-                        MENÚS
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link px-3 py-2 rounded"
-                       style="color: #333; letter-spacing:1px; font-size:0.85rem;"
-                       asp-controller="Menu" asp-action="Disponible">
-                        MENÚ DEL DÍA
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link px-3 py-2 rounded"
-                       style="color: #333; letter-spacing:1px; font-size:0.85rem;"
-                       asp-controller="Proceso" asp-action="Index">
-                        PROCESOS
-                    </a>
-                </li>
+
+                @if (mostrarCatalogo)
+                {
+                    <li class="nav-item">
+                        <a class="nav-link px-3 py-2 rounded"
+                           style="color: #333; letter-spacing:1px; font-size:0.85rem;"
+                           asp-controller="Producto" asp-action="Index">
+                            PRODUCTOS
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 py-2 rounded"
+                           style="color: #333; letter-spacing:1px; font-size:0.85rem;"
+                           asp-controller="Combo" asp-action="Index">
+                            COMBOS
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 py-2 rounded"
+                           style="color: #333; letter-spacing:1px; font-size:0.85rem;"
+                           asp-controller="Menu" asp-action="Index">
+                            MENÚS
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 py-2 rounded"
+                           style="color: #333; letter-spacing:1px; font-size:0.85rem;"
+                           asp-controller="Menu" asp-action="Disponible">
+                            MENÚ DEL DÍA
+                        </a>
+                    </li>
+                }
+
+                @if (User.IsInRole(Roles.Encargado))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link px-3 py-2 rounded"
+                           style="color: #333; letter-spacing:1px; font-size:0.85rem;"
+                           asp-controller="Caja" asp-action="Index">
+                            CAJA
+                        </a>
+                    </li>
+                }
+                @if (User.IsInRole(Roles.Cocina))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link px-3 py-2 rounded"
+                           style="color: #333; letter-spacing:1px; font-size:0.85rem;"
+                           asp-controller="Cocina" asp-action="Index">
+                            COCINA
+                        </a>
+                    </li>
+                }
+                @if (User.IsInRole(Roles.Salonero))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link px-3 py-2 rounded"
+                           style="color: #333; letter-spacing:1px; font-size:0.85rem;"
+                           asp-controller="Salonero" asp-action="Index">
+                            SALÓN
+                        </a>
+                    </li>
+                }
+                @if (User.IsInRole(Roles.Repartidor))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link px-3 py-2 rounded"
+                           style="color: #333; letter-spacing:1px; font-size:0.85rem;"
+                           asp-controller="Repartidor" asp-action="Index">
+                            MIS ENTREGAS
+                        </a>
+                    </li>
+                }
+
+                @if (esAdmin)
+                {
+                    <!-- Dropdown Administración -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle px-3 py-2 rounded"
+                           href="#" role="button"
+                           data-bs-toggle="dropdown"
+                           style="color: #333; letter-spacing:1px; font-size:0.85rem;">
+                            ADMINISTRACIÓN
+                        </a>
+                        <ul class="dropdown-menu shadow">
+                            <li>
+                                <h6 class="dropdown-header text-muted">
+                                    Mantenimientos
+                                </h6>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
+                                   asp-controller="Ingrediente"
+                                   asp-action="Index">
+                                     Ingredientes
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
+                                   asp-controller="AdminProducto"
+                                   asp-action="Index">
+                                    Productos
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
+                                   asp-controller="AdminCombo"
+                                   asp-action="Index">
+                                     Combos
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
+                                   asp-controller="AdminMenu"
+                                   asp-action="Index">
+                                     Menús
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
+                                   asp-controller="AdminProceso"
+                                   asp-action="Index">
+                                    Procesos de Preparación
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
+                                   asp-controller="AdminUsuario"
+                                   asp-action="Index">
+                                    Usuarios
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                }
             </ul>
 
-            <!-- Lado derecho: Carrito + Login -->
-            <!-- Lado derecho: Carrito + Login -->
+            <!-- Lado derecho: Carrito + Sesión -->
             <ul class="navbar-nav ms-auto align-items-center gap-3">
 
-                <!-- Carrito -->
-                <li class="nav-item">
-                    <a class="nav-link position-relative px-2" href="#" style="color: #333;">
-                        🛒
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill"
-                              style="background-color: #f5a623; color: #1a1a1a; font-size: 0.65rem;">
-                            0
+                @if (mostrarCatalogo)
+                {
+                    <!-- Carrito -->
+                    <li class="nav-item">
+                        <a class="nav-link position-relative px-2"
+                           href="#" style="color: #333;">
+                            CARRITO
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill"
+                                  style="background-color: #f5a623; color: #1a1a1a; font-size: 0.65rem;">
+                                0
+                            </span>
+                        </a>
+                    </li>
+                }
+
+                @if (autenticado)
+                {
+                    <li class="nav-item">
+                        <span class="small" style="color:#333;">
+                            Hola, @User.Identity!.Name
                         </span>
-                    </a>
-                </li>
+                    </li>
+                    <li class="nav-item">
+                        <a asp-controller="Login" asp-action="LogOff"
+                           class="btn btn-sm btn-outline-dark px-3"
+                           style="font-size: 0.8rem; letter-spacing: 1px;">
+                            CERRAR SESIÓN
+                        </a>
+                    </li>
+                }
+                else
+                {
+                    <!-- Iniciar Sesión -->
+                    <li class="nav-item">
+                        <a asp-controller="Login" asp-action="Index"
+                           class="btn btn-sm btn-outline-dark px-3"
+                           style="font-size: 0.8rem; letter-spacing: 1px;">
+                            INICIAR SESIÓN
+                        </a>
+                    </li>
 
-                <!-- Iniciar Sesión -->
-                <li class="nav-item">
-                    <a href="#"
-                       class="btn btn-sm btn-outline-dark px-3"
-                       style="font-size: 0.8rem; letter-spacing: 1px;">
-                        INICIAR SESIÓN
-                    </a>
-                </li>
-
-                <!-- Registrarse -->
-                <li class="nav-item">
-                    <a href="#"
-                       class="btn btn-sm px-3"
-                       style="background-color: #f5a623;
-                        color: #1a1a1a;
-                        font-weight: bold;
-                        font-size: 0.8rem;
-                        letter-spacing: 1px;">
-                        REGISTRARSE
-                    </a>
-                </li>
+                    <!-- Registrarse -->
+                    <li class="nav-item">
+                        <a asp-controller="Login" asp-action="Registro"
+                           class="btn btn-sm px-3"
+                           style="background-color: #f5a623;
+                            color: #1a1a1a;
+                            font-weight: bold;
+                            font-size: 0.8rem;
+                            letter-spacing: 1px;">
+                            REGISTRARSE
+                        </a>
+                    </li>
+                }
             </ul>
         </div>
     </div>

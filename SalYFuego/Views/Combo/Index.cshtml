@@ -23,7 +23,7 @@
                             <h5 class="card-title text-primary">@item.Nombre</h5>
                             <p class="text-muted small">@item.CategoriaNombre</p>
                             <div class="d-flex justify-content-between align-items-center mt-3">
-                                <span class="h5">₡@item.PrecioEspecial</span>
+                                <span class="h5">₡@item.PrecioEspecial.ToString("N2")</span>
                                 <a asp-controller="Combo"
                                    asp-action="Detalle"
                                    asp-route-id="@item.IdCombo"

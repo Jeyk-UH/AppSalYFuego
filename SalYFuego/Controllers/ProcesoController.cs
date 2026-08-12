@@ -1,8 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Sal_Fuego.Aplication.Config;
 using Sal_Fuego.Aplication.Services.Interfaces;
 
 namespace Sal_Fuego.Controllers
 {
+    [Authorize(Roles = Roles.Administrador)]
     public class ProcesoController : Controller
     {
         private readonly IServiceProceso _service;

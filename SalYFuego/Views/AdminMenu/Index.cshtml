@@ -1,0 +1,110 @@
+﻿@model IEnumerable<Sal_Fuego.Aplication.DTOs.MenuDTO>
+
+@{
+    ViewData["Title"] = "Gestión de Menús";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>Gestión de Menús</h1>
+        <a asp-controller="AdminMenu" asp-action="Agregar"
+           class="btn btn-success">
+            + Agregar Menú
+        </a>
+    </div>
+
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            @TempData["Exito"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <table class="table table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Nombre</th>
+                <th>Horario</th>
+                <th>Disponibilidad</th>
+                <th>Items</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Nombre</td>
+                    <td>
+                        @item.HoraInicio.ToString("hh:mm tt") -
+                        @item.HoraFin.ToString("hh:mm tt")
+                    </td>
+                    <td>
+                        @if (item.Disponibilidad.Any(d => d.DiaSemana != null))
+                        {
+                            <span class="badge bg-info text-dark">
+                                @string.Join(", ", item.Disponibilidad
+                                    .Where(d => d.DiaSemana != null)
+                                    .Select(d => d.DiaSemana))
+                            </span>
+                        }
+                        else
+                        {
+                            var disp = item.Disponibilidad.FirstOrDefault();
+                            <span class="badge bg-info text-dark">
+                                @disp?.FechaInicio?.ToString("dd/MM/yyyy") -
+                                @disp?.FechaFin?.ToString("dd/MM/yyyy")
+                            </span>
+                        }
+                    </td>
+                    <td>
+                        <span class="badge bg-primary">
+                            @item.Items.Count item(s)
+                        </span>
+                    </td>
+                    <td>
+                        @if (item.EstaActivo)
+                        {
+                            <span class="badge bg-success">Activo</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Inactivo</span>
+                        }
+                    </td>
+                    <td>
+                        <a asp-controller="AdminMenu"
+                           asp-action="Editar"
+                           asp-route-id="@item.IdMenu"
+                           class="btn btn-sm btn-outline-warning">
+                            Editar
+                        </a>
+                        <form asp-controller="AdminMenu"
+                              asp-action="Desactivar"
+                              method="post" class="d-inline"
+                              onsubmit="return confirm(item.EstaActivo ? '¿Desactivar este menú?' : '¿Activar este menú?')">
+                            <input type="hidden" name="id" value="@item.IdMenu" />
+                            @Html.AntiForgeryToken()
+
+                            @if (item.EstaActivo)
+                            {
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    Desactivar
+                                </button>
+                            }
+                            else
+                            {
+                                <button type="submit" class="btn btn-sm btn-outline-success">
+                                    Activar
+                                </button>
+                            }
+                        </form>
+
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

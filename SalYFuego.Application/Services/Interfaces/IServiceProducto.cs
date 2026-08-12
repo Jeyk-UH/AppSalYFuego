@@ -10,6 +10,6 @@ namespace Sal_Fuego.Aplication.Services.Interfaces
         Task<ProductoFormDTO?> FindFormByIdAsync(int id);
         Task AddAsync(ProductoFormDTO dto, string wwwrootPath);
         Task UpdateAsync(ProductoFormDTO dto, string wwwrootPath);
-        Task DeleteAsync(int id);
+        Task DesactivarAsync(int id);
     }
 }

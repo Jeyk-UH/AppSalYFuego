@@ -7,17 +7,33 @@ namespace Sal_Fuego.Web.Controllers
     {
         // Inyectamos nuestro servicio de productos
         private readonly IServiceProducto _service;
+        private readonly IServiceMenu _serviceMenu;
 
-        public ProductoController(IServiceProducto service)
+        public ProductoController(IServiceProducto service, IServiceMenu serviceMenu)
         {
             _service = service;
+            _serviceMenu = serviceMenu;
         }
 
-        // Acción para listar los productos
+        // Acción para listar los productos: solo los activos y que estén
+        // dentro del menú disponible en este momento (según hora/día actual)
         public async Task<IActionResult> Index()
         {
+            var menuDisponible = await _serviceMenu.GetMenuDisponibleAsync();
+            if (menuDisponible == null)
+                return View(Enumerable.Empty<Sal_Fuego.Aplication.DTOs.ProductoDTO>());
+
+            var idsDisponibles = menuDisponible.Items
+                .Where(i => i.Tipo == "Producto" && i.IdProducto.HasValue)
+                .Select(i => i.IdProducto!.Value)
+                .ToHashSet();
+
             var productos = await _service.ListAsync();
-            return View(productos); // Pasa la lista de DTOs a la vista Index.cshtml
+            var disponibles = productos
+                .Where(p => p.Activo && idsDisponibles.Contains(p.IdProducto))
+                .ToList();
+
+            return View(disponibles); // Pasa la lista de DTOs a la vista Index.cshtml
         }
 
         // Acción para el detalle de un producto

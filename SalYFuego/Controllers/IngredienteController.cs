@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Sal_Fuego.Aplication.Config;
 using Sal_Fuego.Aplication.DTOs;
 using Sal_Fuego.Aplication.Services.Interfaces;
 
 namespace Sal_Fuego.Controllers
 {
+    [Authorize(Roles = Roles.Administrador)]
     public class IngredienteController : Controller
     {
         private readonly IServiceIngrediente _service;
