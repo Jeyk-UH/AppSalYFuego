@@ -5,9 +5,10 @@
     bool esAdmin = User.IsInRole(Roles.Administrador);
     bool esOperativo = User.IsInRole(Roles.Encargado) || User.IsInRole(Roles.Cocina)
         || User.IsInRole(Roles.Salonero) || User.IsInRole(Roles.Repartidor);
-    // El catálogo (productos, combos, menús) se muestra a público, Cliente y Administrador.
+    // El catálogo (productos, combos, menús) se muestra a público y Cliente.
+    // Administrador ve directamente los mantenimientos en vez del catálogo público.
     // Los roles operativos (Caja, Cocina, Salón, Repartidor) solo ven su propio panel.
-    bool mostrarCatalogo = !esOperativo;
+    bool mostrarCatalogo = !esOperativo && !esAdmin;
 }
 
 <nav class="navbar navbar-expand-lg shadow-sm"
@@ -71,6 +72,51 @@
                     </li>
                 }
 
+                @if (esAdmin)
+                {
+                    <li class="nav-item">
+                        <a class="nav-link px-3 py-2 rounded"
+                           style="color: #333; letter-spacing:1px; font-size:0.85rem;"
+                           asp-controller="AdminProducto" asp-action="Index">
+                            PRODUCTOS
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 py-2 rounded"
+                           style="color: #333; letter-spacing:1px; font-size:0.85rem;"
+                           asp-controller="AdminCombo" asp-action="Index">
+                            COMBOS
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 py-2 rounded"
+                           style="color: #333; letter-spacing:1px; font-size:0.85rem;"
+                           asp-controller="AdminMenu" asp-action="Index">
+                            MENÚS
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 py-2 rounded"
+                           style="color: #333; letter-spacing:1px; font-size:0.85rem;"
+                           asp-controller="AdminProceso" asp-action="Index">
+                            PROCESOS
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 py-2 rounded"
+                           style="color: #333; letter-spacing:1px; font-size:0.85rem;"
+                           asp-controller="Ingrediente" asp-action="Index">
+                            INGREDIENTES
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 py-2 rounded"
+                           style="color: #333; letter-spacing:1px; font-size:0.85rem;"
+                           asp-controller="AdminUsuario" asp-action="Index">
+                            USUARIOS
+                        </a>
+                    </li>
+                }
                 @if (User.IsInRole(Roles.Encargado))
                 {
                     <li class="nav-item">
@@ -109,68 +155,6 @@
                            asp-controller="Repartidor" asp-action="Index">
                             MIS ENTREGAS
                         </a>
-                    </li>
-                }
-
-                @if (esAdmin)
-                {
-                    <!-- Dropdown Administración -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle px-3 py-2 rounded"
-                           href="#" role="button"
-                           data-bs-toggle="dropdown"
-                           style="color: #333; letter-spacing:1px; font-size:0.85rem;">
-                            ADMINISTRACIÓN
-                        </a>
-                        <ul class="dropdown-menu shadow">
-                            <li>
-                                <h6 class="dropdown-header text-muted">
-                                    Mantenimientos
-                                </h6>
-                            </li>
-                            <li>
-                                <a class="dropdown-item"
-                                   asp-controller="Ingrediente"
-                                   asp-action="Index">
-                                     Ingredientes
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item"
-                                   asp-controller="AdminProducto"
-                                   asp-action="Index">
-                                    Productos
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item"
-                                   asp-controller="AdminCombo"
-                                   asp-action="Index">
-                                     Combos
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item"
-                                   asp-controller="AdminMenu"
-                                   asp-action="Index">
-                                     Menús
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item"
-                                   asp-controller="AdminProceso"
-                                   asp-action="Index">
-                                    Procesos de Preparación
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item"
-                                   asp-controller="AdminUsuario"
-                                   asp-action="Index">
-                                    Usuarios
-                                </a>
-                            </li>
-                        </ul>
                     </li>
                 }
             </ul>

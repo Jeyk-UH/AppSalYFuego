@@ -1,0 +1,111 @@
+@model Sal_Fuego.Aplication.DTOs.EstadisticasAdminDTO
+
+@{
+    ViewData["Title"] = "Panel de Administración";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h1>Panel de Administración</h1>
+            <p class="text-muted mb-0">Bienvenido, @User.Identity!.Name</p>
+        </div>
+        <a asp-controller="Caja" asp-action="Index"
+           class="btn btn-lg"
+           style="background-color:#f5a623; color:#1a1a1a; font-weight:bold;">
+            Realizar Venta
+        </a>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted text-uppercase small mb-2">Pedidos Realizados</h6>
+                    <p class="display-5 fw-bold mb-0" style="color:#f5a623;">
+                        @Model.CantidadPedidos
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted text-uppercase small mb-3">Productos Más Vendidos</h6>
+                    @if (Model.ProductosMasVendidos.Any())
+                    {
+                        <ol class="mb-0 ps-3">
+                            @foreach (var p in Model.ProductosMasVendidos)
+                            {
+                                <li class="mb-1">
+                                    @p.Nombre
+                                    <span class="badge bg-secondary ms-1">
+                                        @p.CantidadVendida vendidos
+                                    </span>
+                                </li>
+                            }
+                        </ol>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">Aún no hay ventas registradas.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Accesos rápidos a mantenimientos -->
+    <h5 class="mb-3">Mantenimientos</h5>
+    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-6 g-3">
+        <div class="col">
+            <a asp-controller="AdminProducto" asp-action="Index"
+               class="card text-decoration-none h-100 text-center py-3 shadow-sm">
+                <div class="card-body">
+                    <span class="fw-semibold" style="color:#1a1a1a;">Productos</span>
+                </div>
+            </a>
+        </div>
+        <div class="col">
+            <a asp-controller="AdminCombo" asp-action="Index"
+               class="card text-decoration-none h-100 text-center py-3 shadow-sm">
+                <div class="card-body">
+                    <span class="fw-semibold" style="color:#1a1a1a;">Combos</span>
+                </div>
+            </a>
+        </div>
+        <div class="col">
+            <a asp-controller="AdminMenu" asp-action="Index"
+               class="card text-decoration-none h-100 text-center py-3 shadow-sm">
+                <div class="card-body">
+                    <span class="fw-semibold" style="color:#1a1a1a;">Menús</span>
+                </div>
+            </a>
+        </div>
+        <div class="col">
+            <a asp-controller="AdminProceso" asp-action="Index"
+               class="card text-decoration-none h-100 text-center py-3 shadow-sm">
+                <div class="card-body">
+                    <span class="fw-semibold" style="color:#1a1a1a;">Procesos</span>
+                </div>
+            </a>
+        </div>
+        <div class="col">
+            <a asp-controller="Ingrediente" asp-action="Index"
+               class="card text-decoration-none h-100 text-center py-3 shadow-sm">
+                <div class="card-body">
+                    <span class="fw-semibold" style="color:#1a1a1a;">Ingredientes</span>
+                </div>
+            </a>
+        </div>
+        <div class="col">
+            <a asp-controller="AdminUsuario" asp-action="Index"
+               class="card text-decoration-none h-100 text-center py-3 shadow-sm">
+                <div class="card-body">
+                    <span class="fw-semibold" style="color:#1a1a1a;">Usuarios</span>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>

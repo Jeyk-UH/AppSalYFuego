@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Sal_Fuego.Aplication.Config;
 using Sal_Fuego.Aplication.DTOs;
 using Sal_Fuego.Aplication.Services.Interfaces;
-using X.PagedList;
 using X.PagedList.Extensions;
 
 namespace Sal_Fuego.Controllers

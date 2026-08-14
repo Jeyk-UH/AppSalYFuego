@@ -16,9 +16,13 @@ namespace Sal_Fuego.Controllers
         public async Task<IActionResult> Index()
         {
             // Cada rol operativo tiene su propia pantalla de inicio.
-            // Anónimos, Cliente y Administrador ven el inicio público con productos destacados.
+            // Anónimos y Cliente ven el inicio público con productos destacados.
+            // Administrador ve su propio panel con estadísticas y accesos rápidos.
             if (User.Identity?.IsAuthenticated == true)
             {
+                if (User.IsInRole(Roles.Administrador))
+                    return RedirectToAction("Index", "Admin");
+
                 if (User.IsInRole(Roles.Encargado))
                     return RedirectToAction("Index", "Caja");
 
