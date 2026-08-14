@@ -10,5 +10,7 @@ namespace Sal_Fuego.Aplication.DTOs
         public int IdRol { get; set; }
         // Nombre del rol (para Claims y para mostrar en pantalla)
         public string NombreRol { get; set; } = null!;
+        // Opcional: usada para buscar clientes registrados desde Caja
+        public string? Cedula { get; set; }
     }
 }

@@ -33,6 +33,12 @@ public partial class Pedido
 
     public int? IdDireccionEntrega { get; set; }
 
+    // Datos de un cliente sin cuenta (venta anónima desde Caja). Solo se usan
+    // cuando IdCliente es null.
+    public string? NombreClienteInvitado { get; set; }
+
+    public string? CedulaClienteInvitado { get; set; }
+
     public virtual ICollection<DetallePedido> DetallePedido { get; set; } = new List<DetallePedido>();
 
     public virtual ICollection<HistorialEstacion> HistorialEstacion { get; set; } = new List<HistorialEstacion>();

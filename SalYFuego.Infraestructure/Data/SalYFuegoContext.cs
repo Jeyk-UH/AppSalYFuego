@@ -305,9 +305,6 @@ public partial class SalYFuegoContext : DbContext
             entity.Property(e => e.Nombre)
                 .HasMaxLength(100)
                 .IsUnicode(false);
-            entity.Property(e => e.NombreMetodo)
-                .HasMaxLength(50)
-                .IsUnicode(false);
         });
 
         modelBuilder.Entity<Pago>(entity =>

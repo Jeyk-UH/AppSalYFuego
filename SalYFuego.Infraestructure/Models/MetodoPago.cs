@@ -9,7 +9,5 @@ public partial class MetodoPago
 
     public string Nombre { get; set; } = null!;
 
-    public string? NombreMetodo { get; set; }
-
     public virtual ICollection<Pago> Pago { get; set; } = new List<Pago>();
 }

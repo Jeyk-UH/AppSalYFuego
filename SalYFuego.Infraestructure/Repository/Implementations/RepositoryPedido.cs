@@ -36,5 +36,15 @@ namespace Sal_Fuego.Infraestructure.Repository.Implementations
                 .Take(top)
                 .ToListAsync();
         }
+
+        // Inserta el Pedido junto con sus DetallePedido y Pago ya armados en las
+        // colecciones de navegación; EF Core encadena las tres inserciones en un
+        // solo SaveChanges y completa las FK automáticamente.
+        public async Task<Pedido> CrearAsync(Pedido pedido)
+        {
+            await _context.Set<Pedido>().AddAsync(pedido);
+            await _context.SaveChangesAsync();
+            return pedido;
+        }
     }
 }

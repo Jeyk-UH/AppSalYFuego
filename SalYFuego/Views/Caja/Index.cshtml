@@ -1,13 +1,514 @@
+@model ICollection<Sal_Fuego.Aplication.DTOs.MenuItemDTO>
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Xsrf
+
 @{
-    ViewData["Title"] = "Caja";
+    ViewData["Title"] = "Punto de Venta";
+
+    var catalogoJson = System.Text.Json.JsonSerializer.Serialize(
+        Model.Select(m => new
+        {
+            tipo = m.Tipo,
+            id = m.Tipo == "Producto" ? m.IdProducto : m.IdCombo,
+            nombre = m.Nombre,
+            precio = m.Precio,
+            imagen = m.ImagenUrl,
+            categoria = m.CategoriaNombre
+        }));
+
+    var csrfToken = Xsrf.GetAndStoreTokens(Context).RequestToken;
+
+    var metodosPagoJson = System.Text.Json.JsonSerializer.Serialize(
+        ((ICollection<Sal_Fuego.Aplication.DTOs.MetodoPagoDTO>)ViewBag.MetodosPago)
+            .Select(m => new { id = m.IdMetodoPago, nombre = m.Nombre }));
 }
 
-<div class="container mt-5 text-center">
-    <h1 style="color:#1a1a1a;">Panel de Caja</h1>
-    <p class="text-muted">
-        Bienvenido, @User.Identity!.Name. Acá vas a poder registrar ventas y pedidos de clientes en tienda.
-    </p>
-    <div class="alert alert-warning d-inline-block mt-3">
-        Próximamente: módulo de Pedidos y Ventas.
+<style>
+    /* Ajustes para uso en pantalla táctil (tablet/kiosco en caja) */
+    .catalogo-card,
+    .btn,
+    .list-group-item {
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .catalogo-card {
+        user-select: none;
+        transition: transform 0.08s ease, box-shadow 0.08s ease;
+    }
+
+    .catalogo-card:active {
+        transform: scale(0.96);
+        box-shadow: 0 0 0 3px #f5a623 inset;
+    }
+
+    .btn-touch {
+        width: 48px;
+        height: 48px;
+        font-size: 1.3rem;
+        line-height: 1;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    #btnCobrar {
+        min-height: 64px;
+        font-size: 1.3rem;
+    }
+
+    .form-control,
+    .form-select {
+        font-size: 1rem;
+        min-height: 44px;
+    }
+
+    .btn-categoria {
+        border: 1px solid #f5a623;
+        background-color: #fff;
+        color: #1a1a1a;
+        border-radius: 20px;
+        padding: 6px 16px;
+        font-size: 0.9rem;
+    }
+
+    .btn-categoria.active {
+        background-color: #f5a623;
+        color: #1a1a1a;
+        font-weight: bold;
+    }
+</style>
+
+<div class="container-fluid mt-4">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <button type="button" class="btn btn-outline-secondary" onclick="history.back()">
+            Volver
+        </button>
+        <h1 class="mb-0">Punto de Venta</h1>
+    </div>
+
+    <div class="row g-3">
+        <!-- Catálogo -->
+        <div class="col-lg-8">
+            <input type="text" id="inputBuscarProducto" class="form-control mb-3"
+                   placeholder="Buscar producto o combo...">
+
+            @if (!Model.Any())
+            {
+                <p class="text-muted">No hay productos ni combos disponibles en el menú en este momento.</p>
+            }
+            else
+            {
+                <div id="categoriasFiltro" class="d-flex flex-wrap gap-2 mb-3"></div>
+                <div class="row g-3" id="catalogoGrid"></div>
+            }
+        </div>
+
+        <!-- Carrito / Cobro -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm" style="position: sticky; top: 1rem;">
+                <div class="card-body">
+                    <h5 class="mb-3">Venta actual</h5>
+
+                    <!-- Cliente -->
+                    <div class="mb-3">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="tipoCliente"
+                                   id="clienteAnonimo" value="anonimo" checked onchange="toggleTipoCliente()">
+                            <label class="form-check-label small" for="clienteAnonimo">Anónimo</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="tipoCliente"
+                                   id="clienteRegistrado" value="registrado" onchange="toggleTipoCliente()">
+                            <label class="form-check-label small" for="clienteRegistrado">Cliente registrado</label>
+                        </div>
+
+                        <div id="panelAnonimo" class="mt-2">
+                            <input type="text" id="inputNombreInvitado"
+                                   class="form-control form-control-sm mb-2" placeholder="Nombre (opcional)">
+                            <input type="text" id="inputCedulaInvitado"
+                                   class="form-control form-control-sm" placeholder="Cédula (opcional)">
+                        </div>
+
+                        <div id="panelRegistrado" class="mt-2" style="display:none;">
+                            <input type="text" id="inputBuscarCliente"
+                                   class="form-control form-control-sm mb-1"
+                                   placeholder="Buscar por nombre o cédula...">
+                            <div id="resultadosCliente" class="list-group small"></div>
+                            <div id="clienteSeleccionadoInfo" class="small text-success mt-1"></div>
+                        </div>
+                    </div>
+
+                    <!-- Método de entrega -->
+                    <div class="mb-3">
+                        <label class="form-label small mb-1">Método de entrega</label>
+                        <select id="selectMetodoEntrega" class="form-select form-select-sm">
+                            <option value="Local">Local</option>
+                            <option value="Para llevar">Para llevar</option>
+                        </select>
+                    </div>
+
+                    <hr />
+
+                    <!-- Carrito -->
+                    <div id="carritoItems"></div>
+
+                    <hr />
+
+                    <div class="d-flex justify-content-between small">
+                        <span>Subtotal</span>
+                        <span id="lblSubtotal">₡0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between small">
+                        <span>Impuesto (13%)</span>
+                        <span id="lblImpuesto">₡0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between fw-bold mt-1">
+                        <span>Total</span>
+                        <span id="lblTotal" style="color:#f5a623;">₡0.00</span>
+                    </div>
+
+                    <button type="button" id="btnCobrar" class="btn w-100 mt-3" disabled
+                            style="background-color:#f5a623; color:#1a1a1a; font-weight:bold;">
+                        Cobrar
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        const catalogo = @Html.Raw(catalogoJson);
+        const metodosPago = @Html.Raw(metodosPagoJson);
+        const csrfToken = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(csrfToken));
+        const nombreEmpleado = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(User.Identity!.Name));
+
+        let carrito = [];
+        let clienteSeleccionado = null;
+        let categoriaActiva = null; // null = todas
+
+        // ---------- Categorías ----------
+        function renderCategorias() {
+            const cont = document.getElementById('categoriasFiltro');
+            if (!cont) return;
+
+            const categorias = [...new Set(catalogo.map(i => i.categoria).filter(Boolean))].sort();
+            const opciones = ['Todas', ...categorias];
+
+            cont.innerHTML = opciones.map((cat, idx) => `
+                <button type="button" class="btn-categoria" data-cat="${cat === 'Todas' ? '' : cat}" data-idx="${idx}"></button>
+            `).join('');
+
+            cont.querySelectorAll('.btn-categoria').forEach((btn, idx) => {
+                btn.textContent = opciones[idx];
+                if (!categoriaActiva && opciones[idx] === 'Todas') btn.classList.add('active');
+                if (categoriaActiva && opciones[idx] === categoriaActiva) btn.classList.add('active');
+
+                btn.addEventListener('click', () => {
+                    categoriaActiva = btn.dataset.cat || null;
+                    cont.querySelectorAll('.btn-categoria').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    renderCatalogo();
+                });
+            });
+        }
+
+        // ---------- Catálogo ----------
+        function renderCatalogo() {
+            const cont = document.getElementById('catalogoGrid');
+            if (!cont) return;
+
+            const inputBusqueda = document.getElementById('inputBuscarProducto');
+            const term = (inputBusqueda?.value || '').toLowerCase();
+
+            const indices = catalogo
+                .map((item, idx) => idx)
+                .filter(idx => {
+                    const coincideTexto = catalogo[idx].nombre.toLowerCase().includes(term);
+                    const coincideCategoria = !categoriaActiva || catalogo[idx].categoria === categoriaActiva;
+                    return coincideTexto && coincideCategoria;
+                });
+
+            if (indices.length === 0) {
+                cont.innerHTML = '<p class="text-muted text-center my-4">No se encontraron resultados.</p>';
+                return;
+            }
+
+            cont.innerHTML = indices.map(idx => `
+                <div class="col-6 col-md-4 col-xl-3">
+                    <div class="card h-100 shadow-sm catalogo-card" style="cursor:pointer;" data-idx="${idx}">
+                        ${catalogo[idx].imagen
+                            ? `<img src="${catalogo[idx].imagen}" class="card-img-top" style="height:130px; object-fit:cover;" alt="">`
+                            : '<div style="height:130px;" class="bg-light"></div>'}
+                        <div class="card-body p-3 text-center">
+                            <div class="fw-semibold nombre-item mb-1"></div>
+                            <div style="color:#f5a623;">₡${catalogo[idx].precio.toFixed(2)}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            cont.querySelectorAll('.catalogo-card').forEach(card => {
+                const idx = parseInt(card.dataset.idx);
+                card.querySelector('.nombre-item').textContent = catalogo[idx].nombre;
+                card.addEventListener('click', () => agregarAlCarrito(catalogo[idx]));
+            });
+        }
+
+        const inputBuscarProducto = document.getElementById('inputBuscarProducto');
+        if (inputBuscarProducto) {
+            inputBuscarProducto.addEventListener('input', function () {
+                renderCatalogo();
+            });
+        }
+
+        // ---------- Carrito ----------
+        function agregarAlCarrito(item) {
+            const existente = carrito.find(i => i.tipo === item.tipo && i.id === item.id);
+            if (existente) {
+                existente.cantidad++;
+            } else {
+                carrito.push({ tipo: item.tipo, id: item.id, nombre: item.nombre, precio: item.precio, cantidad: 1, observaciones: '' });
+            }
+            renderCarrito();
+
+            // Limpiar la búsqueda para facilitar agregar el siguiente producto
+            const inputBusqueda = document.getElementById('inputBuscarProducto');
+            if (inputBusqueda && inputBusqueda.value) {
+                inputBusqueda.value = '';
+                renderCatalogo();
+            }
+        }
+
+        function cambiarCantidad(index, delta) {
+            carrito[index].cantidad += delta;
+            if (carrito[index].cantidad <= 0) carrito.splice(index, 1);
+            renderCarrito();
+        }
+
+        function quitarDelCarrito(index) {
+            carrito.splice(index, 1);
+            renderCarrito();
+        }
+
+        function calcularTotales() {
+            const subtotal = carrito.reduce((acc, i) => acc + i.precio * i.cantidad, 0);
+            const impuesto = Math.round(subtotal * 0.13 * 100) / 100;
+            const total = subtotal + impuesto;
+            return { subtotal, impuesto, total };
+        }
+
+        function renderCarrito() {
+            const cont = document.getElementById('carritoItems');
+
+            if (carrito.length === 0) {
+                cont.innerHTML = '<p class="text-muted text-center my-3 small">El carrito está vacío.</p>';
+            } else {
+                cont.innerHTML = carrito.map((item, idx) => `
+                    <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                        <div>
+                            <div class="fw-semibold nombre-carrito"></div>
+                            <div class="small text-muted">₡${item.precio.toFixed(2)} c/u</div>
+                        </div>
+                        <div class="d-flex align-items-center gap-1">
+                            <button type="button" class="btn btn-touch btn-outline-secondary" onclick="cambiarCantidad(${idx}, -1)">-</button>
+                            <span class="fw-semibold mx-1" style="min-width:1.5rem; text-align:center;">${item.cantidad}</span>
+                            <button type="button" class="btn btn-touch btn-outline-secondary" onclick="cambiarCantidad(${idx}, 1)">+</button>
+                            <button type="button" class="btn btn-touch btn-outline-danger" onclick="quitarDelCarrito(${idx})">×</button>
+                        </div>
+                    </div>
+                `).join('');
+
+                cont.querySelectorAll('.nombre-carrito').forEach((el, idx) => {
+                    el.textContent = carrito[idx].nombre;
+                });
+            }
+
+            const { subtotal, impuesto, total } = calcularTotales();
+            document.getElementById('lblSubtotal').textContent = `₡${subtotal.toFixed(2)}`;
+            document.getElementById('lblImpuesto').textContent = `₡${impuesto.toFixed(2)}`;
+            document.getElementById('lblTotal').textContent = `₡${total.toFixed(2)}`;
+            document.getElementById('btnCobrar').disabled = carrito.length === 0;
+        }
+
+        // ---------- Cliente ----------
+        function toggleTipoCliente() {
+            const registrado = document.getElementById('clienteRegistrado').checked;
+            document.getElementById('panelAnonimo').style.display = registrado ? 'none' : 'block';
+            document.getElementById('panelRegistrado').style.display = registrado ? 'block' : 'none';
+            if (!registrado) {
+                clienteSeleccionado = null;
+                document.getElementById('clienteSeleccionadoInfo').textContent = '';
+            }
+        }
+
+        const inputBuscarCliente = document.getElementById('inputBuscarCliente');
+        if (inputBuscarCliente) {
+            let temporizador = null;
+            inputBuscarCliente.addEventListener('input', function () {
+                clearTimeout(temporizador);
+                const termino = this.value.trim();
+                const resultados = document.getElementById('resultadosCliente');
+
+                if (termino.length < 2) {
+                    resultados.innerHTML = '';
+                    return;
+                }
+
+                temporizador = setTimeout(async () => {
+                    const res = await fetch(`/Caja/BuscarClientes?termino=${encodeURIComponent(termino)}`);
+                    const clientes = await res.json();
+
+                    if (clientes.length === 0) {
+                        resultados.innerHTML = '<div class="list-group-item small text-muted">Sin resultados</div>';
+                        return;
+                    }
+
+                    resultados.innerHTML = clientes.map((c, idx) => `
+                        <button type="button" class="list-group-item list-group-item-action small resultado-cliente" data-idx="${idx}"></button>
+                    `).join('');
+
+                    resultados.querySelectorAll('.resultado-cliente').forEach((btn, idx) => {
+                        const c = clientes[idx];
+                        btn.textContent = c.cedula ? `${c.nombreCompleto} — ${c.cedula}` : c.nombreCompleto;
+                        btn.addEventListener('click', () => seleccionarCliente(c));
+                    });
+                }, 300);
+            });
+        }
+
+        function seleccionarCliente(cliente) {
+            clienteSeleccionado = cliente;
+            document.getElementById('inputBuscarCliente').value = cliente.nombreCompleto;
+            document.getElementById('resultadosCliente').innerHTML = '';
+            document.getElementById('clienteSeleccionadoInfo').textContent = `Seleccionado: ${cliente.nombreCompleto}`;
+        }
+
+        // ---------- Cobro ----------
+        document.getElementById('btnCobrar').addEventListener('click', function () {
+            const { total } = calcularTotales();
+
+            Swal.fire({
+                title: 'Cobrar venta',
+                html: `
+                    <div class="text-start">
+                        <label class="form-label small">Total a cobrar</label>
+                        <p class="h4" style="color:#f5a623;">₡${total.toFixed(2)}</p>
+                        <label class="form-label small">Método de pago</label>
+                        <select id="swalMetodoPago" class="form-select mb-2">
+                            ${metodosPago.map(m => `<option value="${m.id}">${m.nombre}</option>`).join('')}
+                        </select>
+                        <label class="form-label small">Monto recibido</label>
+                        <input type="number" inputmode="decimal" id="swalMontoPagado" class="form-control mb-2" step="0.01" value="${total.toFixed(2)}" style="font-size:1.2rem;">
+                        <p class="small mb-0">Vuelto: <span id="swalVuelto">₡0.00</span></p>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Confirmar cobro',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#f5a623',
+                cancelButtonColor: '#6c757d',
+                didOpen: () => {
+                    const input = document.getElementById('swalMontoPagado');
+                    const selectMetodo = document.getElementById('swalMetodoPago');
+                    const actualizarVuelto = () => {
+                        const pagado = parseFloat(input.value) || 0;
+                        const vuelto = pagado - total;
+                        document.getElementById('swalVuelto').textContent = `₡${(vuelto > 0 ? vuelto : 0).toFixed(2)}`;
+                    };
+                    input.addEventListener('input', actualizarVuelto);
+
+                    // Al cambiar el método de pago, seleccionar el monto para poder reemplazarlo directo
+                    selectMetodo.addEventListener('change', () => {
+                        input.focus();
+                        input.select();
+                    });
+
+                    input.focus();
+                    input.select();
+                    actualizarVuelto();
+                },
+                preConfirm: () => {
+                    const idMetodoPago = parseInt(document.getElementById('swalMetodoPago').value);
+                    const montoPagado = parseFloat(document.getElementById('swalMontoPagado').value) || 0;
+                    if (montoPagado < total) {
+                        Swal.showValidationMessage('El monto recibido es menor al total.');
+                        return false;
+                    }
+                    return { idMetodoPago, montoPagado };
+                }
+            }).then(result => {
+                if (result.isConfirmed) {
+                    registrarVenta(result.value.idMetodoPago, result.value.montoPagado);
+                }
+            });
+        });
+
+        async function registrarVenta(idMetodoPago, montoPagado) {
+            const registrado = document.getElementById('clienteRegistrado').checked;
+
+            const dto = {
+                idCliente: registrado && clienteSeleccionado ? clienteSeleccionado.idUsuario : null,
+                nombreClienteInvitado: registrado ? null : document.getElementById('inputNombreInvitado').value,
+                cedulaClienteInvitado: registrado ? null : document.getElementById('inputCedulaInvitado').value,
+                metodoEntrega: document.getElementById('selectMetodoEntrega').value,
+                idMetodoPago: idMetodoPago,
+                montoPagado: montoPagado,
+                items: carrito.map(i => ({ tipo: i.tipo, id: i.id, cantidad: i.cantidad, observaciones: i.observaciones || null }))
+            };
+
+            try {
+                const res = await fetch('/Caja/Cobrar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify(dto)
+                });
+                const data = await res.json();
+
+                if (data.exito) {
+                    const r = data.resultado;
+                    await Swal.fire({
+                        icon: 'success',
+                        title: '¡Venta registrada!',
+                        html: `
+                            <p class="mb-1">Orden: <strong>${r.codigoOrden}</strong></p>
+                            <p class="mb-1">Total: ₡${r.total.toFixed(2)}</p>
+                            <p class="mb-1">Vuelto: ₡${r.vuelto.toFixed(2)}</p>
+                            <p class="mb-0 text-muted small">Atendido por: ${nombreEmpleado}</p>
+                        `,
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#f5a623'
+                    });
+                    location.reload();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'No se pudo registrar la venta',
+                        text: data.mensaje,
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#2d0000'
+                    });
+                }
+            } catch (e) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de conexión',
+                    text: 'No se pudo comunicar con el servidor.',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#2d0000'
+                });
+            }
+        }
+
+        // Inicialización
+        renderCategorias();
+        renderCatalogo();
+        renderCarrito();
+    </script>
+}

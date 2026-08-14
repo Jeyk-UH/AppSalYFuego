@@ -70,5 +70,19 @@ namespace Sal_Fuego.Infraestructure.Repository.Implementations
                 .AnyAsync(u => u.Correo == correo
                     && (idUsuarioExcluir == null || u.IdUsuario != idUsuarioExcluir));
         }
+
+        // Busca usuarios activos de un rol específico por nombre, correo o cédula
+        public async Task<ICollection<Usuario>> BuscarPorRolAsync(int idRol, string termino)
+        {
+            return await _context.Set<Usuario>()
+                .Where(u => u.IdRol == idRol
+                    && u.Activo
+                    && (u.NombreCompleto.Contains(termino)
+                        || u.Correo.Contains(termino)
+                        || (u.Cedula != null && u.Cedula.Contains(termino))))
+                .OrderBy(u => u.NombreCompleto)
+                .Take(10)
+                .ToListAsync();
+        }
     }
 }

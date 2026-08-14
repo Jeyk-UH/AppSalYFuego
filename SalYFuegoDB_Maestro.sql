@@ -37,8 +37,17 @@ CREATE TABLE USUARIO (
     TokenExpiracion   DATETIME NULL,
     Activo            BIT NOT NULL DEFAULT 1,
     IdRol             INT NOT NULL,
+    Cedula            VARCHAR(20) NULL,
     FOREIGN KEY (IdRol) REFERENCES ROL(IdRol)
 );
+
+-- Actualización idempotente: agrega Cedula si la tabla ya existía sin esa columna
+IF NOT EXISTS (
+    SELECT * FROM sys.columns
+    WHERE object_id = OBJECT_ID(N'[dbo].[USUARIO]') AND name = 'Cedula'
+)
+    ALTER TABLE USUARIO ADD Cedula VARCHAR(20) NULL;
+GO
 
 -- DIRECCION_USUARIO
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[DIRECCION_USUARIO]'))
@@ -210,12 +219,31 @@ CREATE TABLE PEDIDO (
     IdCliente          INT NULL,
     IdEmpleado         INT NULL,
     IdDireccionEntrega INT NULL,
+    -- Datos de un cliente sin cuenta (venta anónima desde Caja). Se usan solo
+    -- cuando IdCliente es NULL; no crean una fila real en USUARIO.
+    NombreClienteInvitado VARCHAR(200) NULL,
+    CedulaClienteInvitado VARCHAR(20) NULL,
     FOREIGN KEY (IdEstado)           REFERENCES ESTADO_PEDIDO(IdEstado),
     FOREIGN KEY (IdEstacionActual)   REFERENCES ESTACION(IdEstacion),
     FOREIGN KEY (IdCliente)          REFERENCES USUARIO(IdUsuario),
     FOREIGN KEY (IdEmpleado)         REFERENCES USUARIO(IdUsuario),
     FOREIGN KEY (IdDireccionEntrega) REFERENCES DIRECCION_USUARIO(IdDireccion)
 );
+
+-- Actualización idempotente: agrega las columnas de cliente invitado si el pedido ya existía
+IF NOT EXISTS (
+    SELECT * FROM sys.columns
+    WHERE object_id = OBJECT_ID(N'[dbo].[PEDIDO]') AND name = 'NombreClienteInvitado'
+)
+    ALTER TABLE PEDIDO ADD NombreClienteInvitado VARCHAR(200) NULL;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM sys.columns
+    WHERE object_id = OBJECT_ID(N'[dbo].[PEDIDO]') AND name = 'CedulaClienteInvitado'
+)
+    ALTER TABLE PEDIDO ADD CedulaClienteInvitado VARCHAR(20) NULL;
+GO
 
 -- DETALLE_PEDIDO
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[DETALLE_PEDIDO]'))

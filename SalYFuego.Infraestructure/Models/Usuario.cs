@@ -21,6 +21,8 @@ public partial class Usuario
 
     public int IdRol { get; set; }
 
+    public string? Cedula { get; set; }
+
     public virtual ICollection<DireccionUsuario> DireccionUsuario { get; set; } = new List<DireccionUsuario>();
 
     public virtual ICollection<HistorialEstadoPedido> HistorialEstadoPedido { get; set; } = new List<HistorialEstadoPedido>();

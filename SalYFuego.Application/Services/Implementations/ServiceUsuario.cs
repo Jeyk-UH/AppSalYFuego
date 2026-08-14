@@ -68,7 +68,8 @@ namespace Sal_Fuego.Aplication.Services.Implementations
                 Correo = dto.Correo!,
                 ContrasenaHash = Cryptography.Encrypt(dto.Password, secret),
                 IdRol = dto.IdRol,
-                Activo = dto.Activo
+                Activo = dto.Activo,
+                Cedula = dto.Cedula
             };
 
             await _repository.AddAsync(usuario);
@@ -89,6 +90,7 @@ namespace Sal_Fuego.Aplication.Services.Implementations
             usuario.Correo = dto.Correo!;
             usuario.IdRol = dto.IdRol;
             usuario.Activo = dto.Activo;
+            usuario.Cedula = dto.Cedula;
 
             if (!string.IsNullOrWhiteSpace(dto.Password))
             {
@@ -129,6 +131,22 @@ namespace Sal_Fuego.Aplication.Services.Implementations
 
             await _repository.AddAsync(usuario);
             return null;
+        }
+
+        // Busca clientes registrados (rol Cliente, activos) por nombre, correo o cédula
+        public async Task<ICollection<ClienteBusquedaDTO>> BuscarClientesAsync(string termino)
+        {
+            if (string.IsNullOrWhiteSpace(termino))
+                return new List<ClienteBusquedaDTO>();
+
+            var usuarios = await _repository.BuscarPorRolAsync(IdRolCliente, termino.Trim());
+            return usuarios.Select(u => new ClienteBusquedaDTO
+            {
+                IdUsuario = u.IdUsuario,
+                NombreCompleto = u.NombreCompleto,
+                Correo = u.Correo,
+                Cedula = u.Cedula
+            }).ToList();
         }
     }
 }

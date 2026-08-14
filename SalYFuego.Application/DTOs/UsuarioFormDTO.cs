@@ -25,5 +25,8 @@ namespace Sal_Fuego.Aplication.DTOs
         public int IdRol { get; set; }
 
         public bool Activo { get; set; } = true;
+
+        [StringLength(20, ErrorMessage = "Máximo 20 caracteres")]
+        public string? Cedula { get; set; }
     }
 }

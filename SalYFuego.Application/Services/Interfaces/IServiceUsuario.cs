@@ -17,5 +17,8 @@ namespace Sal_Fuego.Aplication.Services.Interfaces
 
         // Autoregistro público de clientes
         Task<string?> RegistrarClienteAsync(RegistroDTO dto);
+
+        // Busca clientes registrados (rol Cliente, activos) por nombre, correo o cédula, para Caja
+        Task<ICollection<ClienteBusquedaDTO>> BuscarClientesAsync(string termino);
     }
 }

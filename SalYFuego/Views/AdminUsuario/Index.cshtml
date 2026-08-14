@@ -17,6 +17,7 @@
             <tr>
                 <th>Nombre</th>
                 <th>Correo</th>
+                <th>Cédula</th>
                 <th>Rol</th>
                 <th>Estado</th>
                 <th>Acciones</th>
@@ -28,6 +29,7 @@
                 <tr>
                     <td>@item.NombreCompleto</td>
                     <td>@item.Correo</td>
+                    <td>@(string.IsNullOrEmpty(item.Cedula) ? "—" : item.Cedula)</td>
                     <td><span class="badge bg-dark">@item.NombreRol</span></td>
                     <td>
                         @if (item.Activo)

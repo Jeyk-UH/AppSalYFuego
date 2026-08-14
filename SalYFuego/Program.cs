@@ -30,6 +30,7 @@ builder.Services.AddScoped<IRepositoryCategoria, RepositoryCategoria>();
 builder.Services.AddScoped<IRepositoryUsuario, RepositoryUsuario>();
 builder.Services.AddScoped<IRepositoryRol, RepositoryRol>();
 builder.Services.AddScoped<IRepositoryPedido, RepositoryPedido>();
+builder.Services.AddScoped<IRepositoryMetodoPago, RepositoryMetodoPago>();
 
 // Registro de Servicios
 builder.Services.AddScoped<IServiceProducto, ServiceProducto>();
@@ -41,6 +42,7 @@ builder.Services.AddScoped<IServiceCombo, ServiceCombo>();
 builder.Services.AddScoped<IServiceUsuario, ServiceUsuario>();
 builder.Services.AddScoped<IServiceRol, ServiceRol>();
 builder.Services.AddScoped<IServicePedido, ServicePedido>();
+builder.Services.AddScoped<IServiceMetodoPago, ServiceMetodoPago>();
 
 // Registro de AutoMapper
 builder.Services.AddAutoMapper(cfg => {
@@ -71,6 +73,13 @@ builder.Services.AddControllersWithViews(options =>
             NoStore = true,
             Location = ResponseCacheLocation.None
         });
+});
+
+// Permite validar el token antiforgery también cuando llega por header
+// (necesario para el fetch() en JSON del punto de venta de Caja)
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-CSRF-TOKEN";
 });
 
 var app = builder.Build();

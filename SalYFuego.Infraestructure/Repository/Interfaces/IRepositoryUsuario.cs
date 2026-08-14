@@ -13,5 +13,8 @@ namespace Sal_Fuego.Infraestructure.Repository.Interfaces
         Task UpdateAsync(Usuario usuario);
         // Valida si ya existe un correo registrado (excluyendo opcionalmente un usuario, útil al editar)
         Task<bool> ExisteCorreoAsync(string correo, int? idUsuarioExcluir = null);
+
+        // Busca usuarios activos de un rol específico por nombre, correo o cédula (para Caja)
+        Task<ICollection<Usuario>> BuscarPorRolAsync(int idRol, string termino);
     }
 }
