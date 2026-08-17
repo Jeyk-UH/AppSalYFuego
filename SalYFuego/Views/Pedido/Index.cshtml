@@ -16,7 +16,7 @@
 
     @if (esStaff)
     {
-        <div class="row g-2 mb-3">
+        <div class="row g-2 mb-3 align-items-end">
             <div class="col-md-3">
                 <label class="form-label small mb-1">Fecha</label>
                 <input type="date" id="filtroFecha" class="form-control"
@@ -28,7 +28,16 @@
                     <option value="">-- Todos los estados --</option>
                 </select>
             </div>
-            <div class="col-md-2 d-flex align-items-end">
+            <div class="col-md-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="filtroSoloActivos"
+                           checked="@(((bool)(ViewBag.SoloActivos ?? true)) ? "checked" : null)">
+                    <label class="form-check-label" for="filtroSoloActivos">
+                        Ocultar entregados
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-2">
                 <button type="button" id="btnLimpiarFiltros" class="btn btn-outline-secondary w-100">
                     Limpiar filtros
                 </button>
@@ -74,10 +83,12 @@
             async function aplicarFiltros() {
                 const fecha = document.getElementById('filtroFecha').value;
                 const idEstado = document.getElementById('filtroEstado').value;
+                const soloActivos = document.getElementById('filtroSoloActivos').checked;
 
                 const params = new URLSearchParams();
                 if (fecha) params.append('fecha', fecha);
                 if (idEstado) params.append('idEstado', idEstado);
+                params.append('soloActivos', soloActivos);
 
                 const res = await fetch(`/Pedido/Filtrar?${params.toString()}`);
                 const pedidos = await res.json();
@@ -120,9 +131,11 @@
 
             document.getElementById('filtroFecha').addEventListener('change', aplicarFiltros);
             document.getElementById('filtroEstado').addEventListener('change', aplicarFiltros);
+            document.getElementById('filtroSoloActivos').addEventListener('change', aplicarFiltros);
             document.getElementById('btnLimpiarFiltros').addEventListener('click', () => {
                 document.getElementById('filtroFecha').value = '';
                 document.getElementById('filtroEstado').value = '';
+                document.getElementById('filtroSoloActivos').checked = true;
                 aplicarFiltros();
             });
         }

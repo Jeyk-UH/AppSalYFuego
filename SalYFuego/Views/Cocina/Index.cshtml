@@ -1,13 +1,173 @@
+@model ICollection<Sal_Fuego.Aplication.DTOs.PedidoColaDTO>
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Xsrf
+
 @{
     ViewData["Title"] = "Cocina";
+    var csrfToken = Xsrf.GetAndStoreTokens(Context).RequestToken;
+
+    var colaJson = System.Text.Json.JsonSerializer.Serialize(
+        Model.Select(p => new
+        {
+            idPedido = p.IdPedido,
+            codigoOrden = p.CodigoOrden,
+            fechaPedido = p.FechaPedido,
+            clienteNombre = p.ClienteNombre,
+            idEstado = p.IdEstado,
+            estadoNombre = p.EstadoNombre,
+            lineas = p.Lineas.Select(l => new { nombre = l.Nombre, cantidad = l.Cantidad, observaciones = l.Observaciones })
+        }));
 }
 
-<div class="container mt-5 text-center">
-    <h1 style="color:#1a1a1a;">Gestión de Cocina</h1>
-    <p class="text-muted">
-        Bienvenido, @User.Identity!.Name. Acá vas a ver los pedidos que están en preparación en tiempo real.
-    </p>
-    <div class="alert alert-warning d-inline-block mt-3">
-        Próximamente: módulo de Pedidos y Estaciones en tiempo real.
+<style>
+    .tarjeta-pedido {
+        border-left: 6px solid #f5a623;
+    }
+
+    .tarjeta-pedido.en-preparacion {
+        border-left-color: #2d7d46;
+    }
+
+    .badge-posicion {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: #1a1a1a;
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+
+    .btn-avanzar {
+        min-height: 48px;
+        font-weight: bold;
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="mb-0">Cocina</h1>
+            <p class="text-muted small mb-0">Cola de pedidos: el primero que entra es el primero que se prepara.</p>
+        </div>
+        <button type="button" id="btnActualizar" class="btn btn-outline-secondary">
+            Actualizar
+        </button>
     </div>
+
+    <div id="colaPedidos" class="row g-3"></div>
 </div>
+
+@section Scripts {
+    <script>
+        let cola = @Html.Raw(colaJson);
+        const csrfToken = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(csrfToken));
+
+        function formatoHora(iso) {
+            const d = new Date(iso);
+            return d.toLocaleTimeString('es-CR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function textoBoton(idEstado) {
+            // 2 = Pagado, 3 = En Preparación (ver ESTADO_PEDIDO en SalYFuegoDB_Maestro.sql).
+            // Al avanzar desde "En Preparación" el pedido pasa a "Preparado" (4) y sale
+            // de la cola de Cocina; de ahí en adelante lo gestiona Encargado/Repartidor.
+            return idEstado === 3 ? 'Marcar listo' : 'Iniciar preparación';
+        }
+
+        function renderCola() {
+            const cont = document.getElementById('colaPedidos');
+
+            if (cola.length === 0) {
+                cont.innerHTML = '<div class="col-12"><p class="text-muted text-center my-5">No hay pedidos pendientes de preparar.</p></div>';
+                return;
+            }
+
+            cont.innerHTML = cola.map((p, idx) => `
+                <div class="col-md-6 col-xl-4">
+                    <div class="card shadow-sm h-100 tarjeta-pedido ${p.idEstado === 3 ? 'en-preparacion' : ''}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge-posicion">${idx + 1}</span>
+                                    <div>
+                                        <div class="fw-bold">${p.codigoOrden}</div>
+                                        <div class="small text-muted">${formatoHora(p.fechaPedido)} &middot; <span class="nombre-cliente"></span></div>
+                                    </div>
+                                </div>
+                                <span class="badge bg-dark">${p.estadoNombre}</span>
+                            </div>
+
+                            <ul class="list-unstyled small mb-3 lineas-pedido"></ul>
+
+                            <button type="button" class="btn w-100 btn-avanzar"
+                                    style="background-color:#f5a623; color:#1a1a1a;"
+                                    data-id="${p.idPedido}">
+                                ${textoBoton(p.idEstado)}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            cont.querySelectorAll('.card').forEach((card, idx) => {
+                card.querySelector('.nombre-cliente').textContent = cola[idx].clienteNombre;
+
+                const lista = card.querySelector('.lineas-pedido');
+                cola[idx].lineas.forEach(l => {
+                    const li = document.createElement('li');
+                    li.className = 'border-bottom py-1';
+                    li.textContent = l.observaciones ? `${l.cantidad} x ${l.nombre} — ${l.observaciones}` : `${l.cantidad} x ${l.nombre}`;
+                    lista.appendChild(li);
+                });
+            });
+
+            cont.querySelectorAll('.btn-avanzar').forEach(btn => {
+                btn.addEventListener('click', () => avanzarPedido(parseInt(btn.dataset.id)));
+            });
+        }
+
+        async function avanzarPedido(idPedido) {
+            try {
+                const res = await fetch('/Cocina/Avanzar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify(idPedido)
+                });
+                const data = await res.json();
+
+                if (data.exito) {
+                    await actualizarCola();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'No se pudo actualizar el pedido',
+                        text: data.mensaje,
+                        confirmButtonColor: '#2d0000'
+                    });
+                }
+            } catch (e) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de conexión',
+                    text: 'No se pudo comunicar con el servidor.',
+                    confirmButtonColor: '#2d0000'
+                });
+            }
+        }
+
+        async function actualizarCola() {
+            const res = await fetch('/Cocina/ObtenerCola');
+            cola = await res.json();
+            renderCola();
+        }
+
+        document.getElementById('btnActualizar').addEventListener('click', actualizarCola);
+
+        renderCola();
+    </script>
+}

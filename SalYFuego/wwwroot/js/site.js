@@ -26,3 +26,39 @@ function confirmarAccion(event, mensaje) {
 
     return false;
 }
+
+// ---------- Carrito de compra (persistido en localStorage) ----------
+// El carrito vive en el navegador del Cliente (no hay tabla CARRITO en la BD);
+// se guarda aquí para que el contador del navbar y la vista /Carrito/Index
+// se mantengan sincronizados aunque el cliente navegue a otras páginas.
+const CARRITO_STORAGE_KEY = 'salyfuego_carrito';
+
+function obtenerCarritoStorage() {
+    try {
+        const raw = localStorage.getItem(CARRITO_STORAGE_KEY);
+        return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function guardarCarritoStorage(carrito) {
+    localStorage.setItem(CARRITO_STORAGE_KEY, JSON.stringify(carrito));
+    actualizarBadgeCarrito();
+}
+
+function actualizarBadgeCarrito() {
+    const badge = document.getElementById('badgeCarrito');
+    if (!badge) return;
+
+    const cantidad = obtenerCarritoStorage().reduce((acc, item) => acc + item.cantidad, 0);
+
+    if (cantidad > 0) {
+        badge.textContent = cantidad;
+        badge.style.display = 'inline-block';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+actualizarBadgeCarrito();

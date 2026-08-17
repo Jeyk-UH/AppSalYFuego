@@ -22,5 +22,17 @@ namespace Sal_Fuego.Aplication.Services.Implementations
                 Nombre = m.Nombre
             }).ToList();
         }
+
+        public async Task<ICollection<MetodoPagoDTO>> ListPresencialAsync()
+        {
+            var todos = await ListAsync();
+            return todos.Where(m => m.Nombre != "Pago Web").ToList();
+        }
+
+        public async Task<ICollection<MetodoPagoDTO>> ListEnLineaAsync()
+        {
+            var todos = await ListAsync();
+            return todos.Where(m => m.Nombre == "Efectivo" || m.Nombre == "Pago Web").ToList();
+        }
     }
 }

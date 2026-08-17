@@ -1,8 +1,9 @@
 @model ICollection<Sal_Fuego.Aplication.DTOs.MenuItemDTO>
+@using System.Security.Claims
 @inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Xsrf
 
 @{
-    ViewData["Title"] = "Punto de Venta";
+    ViewData["Title"] = "Mi Carrito";
 
     var catalogoJson = System.Text.Json.JsonSerializer.Serialize(
         Model.Select(m => new
@@ -22,10 +23,11 @@
             .Select(m => new { id = m.IdMetodoPago, nombre = m.Nombre }));
 
     decimal costoEnvioDomicilio = ViewBag.CostoEnvioDomicilio;
+    var correoCliente = User.FindFirstValue(ClaimTypes.Email);
+    var clima = ViewBag.Clima as Sal_Fuego.Aplication.DTOs.ClimaDTO;
 }
 
 <style>
-    /* Ajustes para uso en pantalla táctil (tablet/kiosco en caja) */
     .catalogo-card,
     .btn,
     .list-group-item {
@@ -59,15 +61,9 @@
         touch-action: manipulation;
     }
 
-    #btnCobrar {
+    #btnConfirmarPedido {
         min-height: 60px;
         font-size: 1.2rem;
-    }
-
-    .form-control,
-    .form-select {
-        font-size: 1rem;
-        min-height: 44px;
     }
 
     .btn-categoria {
@@ -87,12 +83,7 @@
 </style>
 
 <div class="container-fluid mt-4">
-    <div class="d-flex align-items-center gap-2 mb-3">
-        <button type="button" class="btn btn-outline-secondary" onclick="history.back()">
-            Volver
-        </button>
-        <h1 class="mb-0">Punto de Venta</h1>
-    </div>
+    <h1 class="mb-3">Mi Carrito</h1>
 
     <div class="row g-3">
         <!-- Catálogo -->
@@ -111,55 +102,37 @@
             }
         </div>
 
-        <!-- Carrito / Cobro -->
+        <!-- Carrito / Confirmación -->
         <div class="col-lg-4">
             <div class="card shadow-sm" style="position: sticky; top: 1rem;">
                 <div class="card-body">
-                    <h5 class="mb-1">Venta actual</h5>
+                    <h5 class="mb-1">Mi pedido</h5>
+                    <p class="small text-muted mb-1">
+                        Cliente: <strong>@User.Identity!.Name</strong>
+                        @if (!string.IsNullOrWhiteSpace(correoCliente))
+                        {
+                            <text> &middot; @correoCliente</text>
+                        }
+                    </p>
                     <p class="small text-muted mb-3">
-                        Encargado: <strong>@User.Identity!.Name</strong> &middot;
-                        Estado: <strong>Pagado</strong>
+                        Estado: <strong>Pendiente de Pago</strong>
                     </p>
 
-                    <!-- Cliente -->
-                    <div class="mb-3">
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="tipoCliente"
-                                   id="clienteAnonimo" value="anonimo" checked onchange="toggleTipoCliente()">
-                            <label class="form-check-label small" for="clienteAnonimo">Anónimo</label>
+                    @if (clima != null)
+                    {
+                        <div class="alert alert-light border small py-2 mb-3">
+                            Clima actual: <strong>@clima.TemperaturaC.ToString("N0")&deg;C</strong>, @clima.Descripcion.
+                            El tiempo de entrega a domicilio puede variar según el clima.
                         </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="tipoCliente"
-                                   id="clienteRegistrado" value="registrado" onchange="toggleTipoCliente()">
-                            <label class="form-check-label small" for="clienteRegistrado">Cliente registrado</label>
-                        </div>
-
-                        <div id="panelAnonimo" class="mt-2">
-                            <input type="text" id="inputNombreInvitado"
-                                   class="form-control form-control-sm mb-2" placeholder="Nombre (opcional)">
-                            <input type="text" id="inputCedulaInvitado"
-                                   class="form-control form-control-sm" placeholder="Cédula (opcional)">
-                        </div>
-
-                        <div id="panelRegistrado" class="mt-2" style="display:none;">
-                            <input type="text" id="inputBuscarCliente"
-                                   class="form-control form-control-sm mb-1"
-                                   placeholder="Buscar por nombre o cédula (obligatorio)...">
-                            <div id="resultadosCliente" class="list-group small"></div>
-                            <div id="clienteSeleccionadoInfo" class="small text-success mt-1"></div>
-                        </div>
-                    </div>
+                    }
 
                     <!-- Método de entrega -->
                     <div class="mb-3">
                         <label class="form-label small mb-1">Método de entrega</label>
                         <select id="selectMetodoEntrega" class="form-select form-select-sm">
                             <option value="Recogida en tienda">Recogida en tienda</option>
-                            <option value="Entrega a domicilio" disabled>Entrega a domicilio (+₡@costoEnvioDomicilio.ToString("N2"))</option>
+                            <option value="Entrega a domicilio">Entrega a domicilio (+₡@costoEnvioDomicilio.ToString("N2"))</option>
                         </select>
-                        <div class="form-text small" id="ayudaDomicilio">
-                            Solo disponible con cliente registrado.
-                        </div>
                     </div>
 
                     <!-- Dirección (solo si es a domicilio) -->
@@ -207,9 +180,9 @@
                         <span id="lblTotal" style="color:#f5a623;">₡0.00</span>
                     </div>
 
-                    <button type="button" id="btnCobrar" class="btn w-100 mt-3" disabled
+                    <button type="button" id="btnConfirmarPedido" class="btn w-100 mt-3" disabled
                             style="background-color:#f5a623; color:#1a1a1a; font-weight:bold;">
-                        Cobrar
+                        Confirmar Pedido
                     </button>
                 </div>
             </div>
@@ -222,11 +195,11 @@
         const catalogo = @Html.Raw(catalogoJson);
         const metodosPago = @Html.Raw(metodosPagoJson);
         const csrfToken = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(csrfToken));
-        const nombreEmpleado = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(User.Identity!.Name));
         const costoEnvioDomicilio = @costoEnvioDomicilio.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
-        let carrito = [];
-        let clienteSeleccionado = null;
+        // El carrito se guarda en localStorage (ver site.js) para que el contador
+        // del navbar se mantenga sincronizado con esta vista.
+        let carrito = obtenerCarritoStorage();
         let categoriaActiva = null; // null = todas
 
         // ---------- Categorías ----------
@@ -314,7 +287,6 @@
             }
             renderCarrito();
 
-            // Limpiar la búsqueda para facilitar agregar el siguiente producto
             const inputBusqueda = document.getElementById('inputBuscarProducto');
             if (inputBusqueda && inputBusqueda.value) {
                 inputBusqueda.value = '';
@@ -337,8 +309,6 @@
             return document.getElementById('selectMetodoEntrega').value === 'Entrega a domicilio';
         }
 
-        // Lee del DOM la cantidad "tentativa" de cada línea (puede diferir un
-        // instante de lo guardado en carrito mientras el usuario está escribiendo)
         function calcularTotales() {
             let subtotal = 0;
             carrito.forEach((item, idx) => {
@@ -360,11 +330,11 @@
             document.getElementById('filaEnvio').style.display = envio > 0 ? 'flex' : 'none';
             document.getElementById('lblEnvio').textContent = `₡${envio.toFixed(2)}`;
             document.getElementById('lblTotal').textContent = `₡${total.toFixed(2)}`;
-            document.getElementById('btnCobrar').disabled = carrito.length === 0;
+            document.getElementById('btnConfirmarPedido').disabled = carrito.length === 0;
+
+            guardarCarritoStorage(carrito);
         }
 
-        // Actualiza el subtotal/impuesto de una sola línea (sin reconstruir el DOM,
-        // para no perder el foco del campo de cantidad mientras se escribe)
         function actualizarLineaVisual(idx, cantidadTexto) {
             const fila = document.querySelector(`[data-fila="${idx}"]`);
             if (!fila) return;
@@ -415,8 +385,6 @@
 
                 cont.querySelectorAll('.input-cantidad').forEach(input => {
                     input.addEventListener('input', function () {
-                        // Solo dígitos; se puede dejar vacío mientras se escribe sin
-                        // que se borre la línea (solo se borra al confirmar en 0).
                         this.value = this.value.replace(/[^0-9]/g, '');
                         const idx = parseInt(this.dataset.idx);
                         actualizarLineaVisual(idx, this.value);
@@ -445,6 +413,7 @@
                 cont.querySelectorAll('.input-observaciones').forEach(input => {
                     input.addEventListener('input', function () {
                         carrito[parseInt(this.dataset.idx)].observaciones = this.value;
+                        guardarCarritoStorage(carrito);
                     });
                 });
             }
@@ -452,108 +421,14 @@
             actualizarTotalesEnVivo();
         }
 
-        // ---------- Cliente ----------
-        function toggleTipoCliente() {
-            const registrado = document.getElementById('clienteRegistrado').checked;
-            document.getElementById('panelAnonimo').style.display = registrado ? 'none' : 'block';
-            document.getElementById('panelRegistrado').style.display = registrado ? 'block' : 'none';
-            if (!registrado) {
-                clienteSeleccionado = null;
-                document.getElementById('clienteSeleccionadoInfo').textContent = '';
-            }
-            actualizarDisponibilidadEntrega();
-        }
-
-        // La entrega a domicilio necesita una dirección real ligada a un usuario:
-        // solo se habilita cuando hay (o puede haber) un cliente registrado.
-        function actualizarDisponibilidadEntrega() {
-            const registrado = document.getElementById('clienteRegistrado').checked;
-            const selectEntrega = document.getElementById('selectMetodoEntrega');
-            const opcionDomicilio = selectEntrega.querySelector('option[value="Entrega a domicilio"]');
-            opcionDomicilio.disabled = !registrado;
-            document.getElementById('ayudaDomicilio').style.display = registrado ? 'none' : 'block';
-            if (!registrado && selectEntrega.value === 'Entrega a domicilio') {
-                selectEntrega.value = 'Recogida en tienda';
-            }
-            actualizarPanelDireccion();
-        }
-
-        function actualizarPanelDireccion() {
+        // ---------- Método de entrega ----------
+        document.getElementById('selectMetodoEntrega').addEventListener('change', function () {
             document.getElementById('panelDireccion').style.display = esDomicilio() ? 'block' : 'none';
             actualizarTotalesEnVivo();
-        }
+        });
 
-        document.getElementById('selectMetodoEntrega').addEventListener('change', actualizarPanelDireccion);
-
-        const inputBuscarCliente = document.getElementById('inputBuscarCliente');
-        if (inputBuscarCliente) {
-            let temporizador = null;
-            inputBuscarCliente.addEventListener('input', function () {
-                // Cualquier cambio en el texto invalida la selección anterior: hay que
-                // volver a elegir explícitamente de la lista para que cuente como
-                // "cliente registrado" (evita cobrar a nombre del cliente equivocado).
-                clienteSeleccionado = null;
-                document.getElementById('clienteSeleccionadoInfo').textContent = '';
-
-                clearTimeout(temporizador);
-                const termino = this.value.trim();
-                const resultados = document.getElementById('resultadosCliente');
-
-                if (termino.length < 2) {
-                    resultados.innerHTML = '';
-                    return;
-                }
-
-                temporizador = setTimeout(async () => {
-                    const res = await fetch(`/Caja/BuscarClientes?termino=${encodeURIComponent(termino)}`);
-                    const clientes = await res.json();
-
-                    if (clientes.length === 0) {
-                        resultados.innerHTML = '<div class="list-group-item small text-muted">Sin resultados</div>';
-                        return;
-                    }
-
-                    // La lista de búsqueda solo muestra 1 dato (el nombre); los 2 campos
-                    // identificatorios completos se muestran recién al seleccionar.
-                    resultados.innerHTML = clientes.map((c, idx) => `
-                        <button type="button" class="list-group-item list-group-item-action small resultado-cliente" data-idx="${idx}"></button>
-                    `).join('');
-
-                    resultados.querySelectorAll('.resultado-cliente').forEach((btn, idx) => {
-                        const c = clientes[idx];
-                        btn.textContent = c.nombreCompleto;
-                        btn.addEventListener('click', () => seleccionarCliente(c));
-                    });
-                }, 300);
-            });
-        }
-
-        function seleccionarCliente(cliente) {
-            clienteSeleccionado = cliente;
-            document.getElementById('inputBuscarCliente').value = cliente.nombreCompleto;
-            document.getElementById('resultadosCliente').innerHTML = '';
-            // 2 campos identificatorios, mostrados a la par una vez seleccionado.
-            document.getElementById('clienteSeleccionadoInfo').textContent =
-                cliente.cedula ? `${cliente.nombreCompleto} — Cédula: ${cliente.cedula}` : cliente.nombreCompleto;
-        }
-
-        // ---------- Cobro ----------
-        document.getElementById('btnCobrar').addEventListener('click', function () {
-            // Si el cajero marcó "Cliente registrado", es obligatorio que haya
-            // seleccionado a alguien de la búsqueda; si no, no se deja cobrar
-            // (de lo contrario la venta caería silenciosamente como anónima).
-            const registrado = document.getElementById('clienteRegistrado').checked;
-            if (registrado && !clienteSeleccionado) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Falta seleccionar el cliente',
-                    text: 'Busque y seleccione un cliente registrado de la lista antes de cobrar, o marque "Anónimo" si no aplica.',
-                    confirmButtonText: 'OK',
-                    confirmButtonColor: '#f5a623'
-                });
-                return;
-            }
-
+        // ---------- Confirmar pedido ----------
+        document.getElementById('btnConfirmarPedido').addEventListener('click', function () {
             if (esDomicilio() && !document.getElementById('inputDireccionExacta').value.trim()) {
                 Swal.fire({
                     icon: 'warning',
@@ -567,94 +442,94 @@
             const { total } = calcularTotales();
 
             Swal.fire({
-                title: 'Cobrar venta',
+                title: 'Confirmar pedido',
                 html: `
                     <div class="text-start">
-                        <label class="form-label small">Total a cobrar</label>
-                        <p class="h4" style="color:#f5a623;">₡${total.toFixed(2)}</p>
+                        <p class="h4 text-center" style="color:#f5a623;">₡${total.toFixed(2)}</p>
                         <label class="form-label small">Método de pago</label>
                         <select id="swalMetodoPago" class="form-select mb-2">
                             ${metodosPago.map(m => `<option value="${m.id}" data-nombre="${m.nombre}">${m.nombre}</option>`).join('')}
                         </select>
-                        <label class="form-label small">Monto recibido</label>
-                        <input type="number" inputmode="decimal" id="swalMontoPagado" class="form-control mb-2" step="0.01" value="${total.toFixed(2)}" style="font-size:1.2rem;">
-                        <p class="small mb-0">Vuelto: <span id="swalVuelto">₡0.00</span></p>
+                        <div id="swalPanelTarjeta" style="display:none;">
+                            <label class="form-label small">Tipo de tarjeta</label>
+                            <select id="swalTipoTarjeta" class="form-select mb-2">
+                                <option value="Crédito">Crédito</option>
+                                <option value="Débito">Débito</option>
+                            </select>
+                            <label class="form-label small">Nombre en la tarjeta</label>
+                            <input type="text" id="swalNombreTarjeta" class="form-control mb-2" placeholder="Como aparece en la tarjeta">
+                            <label class="form-label small">Últimos 4 dígitos</label>
+                            <input type="text" id="swalUltimosDigitos" class="form-control mb-2" maxlength="4" inputmode="numeric" placeholder="0000">
+                        </div>
+                        <div id="swalPanelEfectivo" style="display:none;" class="alert alert-light border small mb-0">
+                            Pagará en efectivo cuando retire o reciba su pedido.
+                        </div>
                     </div>
                 `,
                 showCancelButton: true,
-                confirmButtonText: 'Confirmar cobro',
+                confirmButtonText: 'Confirmar',
                 cancelButtonText: 'Cancelar',
                 confirmButtonColor: '#f5a623',
                 cancelButtonColor: '#6c757d',
                 didOpen: () => {
-                    const input = document.getElementById('swalMontoPagado');
-                    const actualizarVuelto = () => {
-                        const pagado = parseFloat(input.value) || 0;
-                        const vuelto = pagado - total;
-                        document.getElementById('swalVuelto').textContent = `₡${(vuelto > 0 ? vuelto : 0).toFixed(2)}`;
+                    const selectMetodo = document.getElementById('swalMetodoPago');
+                    const panelTarjeta = document.getElementById('swalPanelTarjeta');
+                    const panelEfectivo = document.getElementById('swalPanelEfectivo');
+
+                    const actualizarPaneles = () => {
+                        const nombre = (selectMetodo.selectedOptions[0].dataset.nombre || '').toLowerCase();
+                        const esPagoWeb = nombre.includes('web');
+                        panelTarjeta.style.display = esPagoWeb ? 'block' : 'none';
+                        panelEfectivo.style.display = esPagoWeb ? 'none' : 'block';
                     };
-                    input.addEventListener('input', actualizarVuelto);
-
-                    document.getElementById('swalMetodoPago').addEventListener('change', () => {
-                        input.focus();
-                        input.select();
-                    });
-
-                    input.focus();
-                    input.select();
-                    actualizarVuelto();
+                    selectMetodo.addEventListener('change', actualizarPaneles);
+                    actualizarPaneles();
                 },
                 preConfirm: () => {
                     const selectMetodo = document.getElementById('swalMetodoPago');
                     const idMetodoPago = parseInt(selectMetodo.value);
-                    const nombreMetodo = (selectMetodo.selectedOptions[0].dataset.nombre || '').toLowerCase();
-                    const montoPagado = parseFloat(document.getElementById('swalMontoPagado').value) || 0;
+                    const nombre = selectMetodo.selectedOptions[0].dataset.nombre.toLowerCase();
+                    let tipoTarjeta = null, ultimosDigitos = null;
 
-                    if (montoPagado < total) {
-                        Swal.showValidationMessage('El monto recibido es menor al total.');
-                        return false;
+                    if (nombre.includes('web')) {
+                        const nombreTarjeta = document.getElementById('swalNombreTarjeta').value.trim();
+                        if (!nombreTarjeta) {
+                            Swal.showValidationMessage('Ingrese el nombre en la tarjeta.');
+                            return false;
+                        }
+                        tipoTarjeta = document.getElementById('swalTipoTarjeta').value;
+                        ultimosDigitos = document.getElementById('swalUltimosDigitos').value.trim();
+                        if (ultimosDigitos.length !== 4 || isNaN(ultimosDigitos)) {
+                            Swal.showValidationMessage('Ingrese los últimos 4 dígitos de la tarjeta.');
+                            return false;
+                        }
                     }
 
-                    // En Caja el cliente paga con su tarjeta directo en el datáfono
-                    // (POS físico): no hace falta digitar nombre ni últimos dígitos,
-                    // solo se deja constancia del tipo según el método elegido.
-                    const tipoTarjeta = nombreMetodo.includes('tarjeta')
-                        ? (nombreMetodo.includes('débito') ? 'Débito' : 'Crédito')
-                        : null;
-
-                    return { idMetodoPago, montoPagado, tipoTarjeta, ultimosDigitos: null };
+                    return { idMetodoPago, tipoTarjeta, ultimosDigitos };
                 }
             }).then(result => {
                 if (result.isConfirmed) {
-                    registrarVenta(result.value);
+                    registrarPedido(result.value);
                 }
             });
         });
 
-        async function registrarVenta({ idMetodoPago, montoPagado, tipoTarjeta, ultimosDigitos }) {
-            const registrado = document.getElementById('clienteRegistrado').checked;
-            const domicilio = esDomicilio();
-
+        async function registrarPedido({ idMetodoPago, tipoTarjeta, ultimosDigitos }) {
             const dto = {
-                idCliente: registrado && clienteSeleccionado ? clienteSeleccionado.idUsuario : null,
-                nombreClienteInvitado: registrado ? null : document.getElementById('inputNombreInvitado').value,
-                cedulaClienteInvitado: registrado ? null : document.getElementById('inputCedulaInvitado').value,
-                requiereClienteRegistrado: registrado,
                 metodoEntrega: document.getElementById('selectMetodoEntrega').value,
-                provincia: domicilio ? document.getElementById('inputProvincia').value : null,
-                canton: domicilio ? document.getElementById('inputCanton').value : null,
-                distrito: domicilio ? document.getElementById('inputDistrito').value : null,
-                direccionExacta: domicilio ? document.getElementById('inputDireccionExacta').value : null,
-                referencia: domicilio ? document.getElementById('inputReferencia').value : null,
+                provincia: esDomicilio() ? document.getElementById('inputProvincia').value : null,
+                canton: esDomicilio() ? document.getElementById('inputCanton').value : null,
+                distrito: esDomicilio() ? document.getElementById('inputDistrito').value : null,
+                direccionExacta: esDomicilio() ? document.getElementById('inputDireccionExacta').value : null,
+                referencia: esDomicilio() ? document.getElementById('inputReferencia').value : null,
                 idMetodoPago: idMetodoPago,
-                montoPagado: montoPagado,
                 tipoTarjeta: tipoTarjeta,
                 ultimosDigitos: ultimosDigitos,
                 items: carrito.map(i => ({ tipo: i.tipo, id: i.id, cantidad: i.cantidad, observaciones: i.observaciones || null }))
             };
 
             try {
-                const res = await fetch('/Caja/Cobrar', {
+                const res = await fetch('/Carrito/Comprar', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -666,23 +541,27 @@
 
                 if (data.exito) {
                     const r = data.resultado;
+
+                    // El pedido ya se registró: se vacía el carrito local y el badge.
+                    carrito = [];
+                    guardarCarritoStorage(carrito);
+
                     await Swal.fire({
                         icon: 'success',
-                        title: '¡Venta registrada!',
+                        title: '¡Pedido enviado!',
                         html: `
                             <p class="mb-1">Orden: <strong>${r.codigoOrden}</strong></p>
                             <p class="mb-1">Total: ₡${r.total.toFixed(2)}</p>
-                            <p class="mb-1">Vuelto: ₡${r.vuelto.toFixed(2)}</p>
-                            <p class="mb-0 text-muted small">Atendido por: ${nombreEmpleado}</p>
+                            <p class="mb-0 text-muted small">Puede seguir su estado en "Mis Pedidos".</p>
                         `,
                         confirmButtonText: 'OK',
                         confirmButtonColor: '#f5a623'
                     });
-                    resetVenta();
+                    window.location.href = '/Pedido/Index';
                 } else {
                     Swal.fire({
                         icon: 'error',
-                        title: 'No se pudo registrar la venta',
+                        title: 'No se pudo registrar el pedido',
                         text: data.mensaje,
                         confirmButtonText: 'OK',
                         confirmButtonColor: '#2d0000'
@@ -697,33 +576,6 @@
                     confirmButtonColor: '#2d0000'
                 });
             }
-        }
-
-        // Deja la pantalla lista para la próxima venta sin recargar la página.
-        function resetVenta() {
-            carrito = [];
-            clienteSeleccionado = null;
-            document.getElementById('clienteAnonimo').checked = true;
-            document.getElementById('inputNombreInvitado').value = '';
-            document.getElementById('inputCedulaInvitado').value = '';
-            document.getElementById('inputBuscarCliente').value = '';
-            document.getElementById('resultadosCliente').innerHTML = '';
-            document.getElementById('clienteSeleccionadoInfo').textContent = '';
-            toggleTipoCliente();
-
-            document.getElementById('selectMetodoEntrega').value = 'Recogida en tienda';
-            document.getElementById('inputProvincia').value = '';
-            document.getElementById('inputCanton').value = '';
-            document.getElementById('inputDistrito').value = '';
-            document.getElementById('inputDireccionExacta').value = '';
-            document.getElementById('inputReferencia').value = '';
-            actualizarPanelDireccion();
-
-            document.getElementById('inputBuscarProducto').value = '';
-            categoriaActiva = null;
-            renderCategorias();
-            renderCatalogo();
-            renderCarrito();
         }
 
         // Inicialización

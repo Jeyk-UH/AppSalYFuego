@@ -375,26 +375,64 @@ GO
 
 /* ============================
    PASO 6: ESTADOS DEL PEDIDO
+   Tramo común: Pendiente de Pago -> Pagado -> En Preparación -> Preparado.
+   De ahí se bifurca según el método de entrega:
+     Recogida en tienda: Listo para Retirar -> Retirado
+     Entrega a domicilio: En Espera Repartidor -> En Ruta -> Entregado
+   "Listo para Servir" queda reservado para un eventual modo de consumo en el local.
 ============================ */
-SET IDENTITY_INSERT ESTADO_PEDIDO ON;
-INSERT INTO ESTADO_PEDIDO (IdEstado, Nombre, Orden) VALUES
-(1, 'Pendiente de Pago', 1),
-(2, 'Aceptada',          2),
-(3, 'Preparación',       3),
-(4, 'Procesando',        4),
-(5, 'Entregada',         5);
-SET IDENTITY_INSERT ESTADO_PEDIDO OFF;
+IF NOT EXISTS (SELECT * FROM ESTADO_PEDIDO)
+BEGIN
+    SET IDENTITY_INSERT ESTADO_PEDIDO ON;
+    INSERT INTO ESTADO_PEDIDO (IdEstado, Nombre, Orden) VALUES
+    (1,  'Pendiente de Pago',    1),
+    (2,  'Pagado',               2),
+    (3,  'En Preparación',       3),
+    (4,  'Preparado',            4),
+    (5,  'En Espera Repartidor', 5),
+    (6,  'En Ruta',              6),
+    (7,  'Listo para Retirar',   7),
+    (8,  'Listo para Servir',    8),
+    (9,  'Entregado',            9),
+    (10, 'Retirado',             10);
+    SET IDENTITY_INSERT ESTADO_PEDIDO OFF;
+END
 GO
 
 /* ============================
    PASO 7: MÉTODOS DE PAGO
+   Efectivo / Tarjeta de Crédito / Tarjeta de Débito: pago presencial (Caja, o el
+   botón Cobrar de un pedido pendiente) — se cobra en el datáfono físico, no se
+   digitan datos de tarjeta.
+   Pago Web: pago en línea desde el Carrito del Cliente (junto con Efectivo, que
+   ahí significa "pago contra entrega/retiro"). Es el único método de tarjeta que
+   pide nombre y últimos dígitos, porque simula el cobro de una pasarela en línea.
 ============================ */
-SET IDENTITY_INSERT METODO_PAGO ON;
-INSERT INTO METODO_PAGO (IdMetodoPago, Nombre) VALUES
-(1, 'Efectivo'),
-(2, 'Tarjeta'),
-(3, 'SINPE');
-SET IDENTITY_INSERT METODO_PAGO OFF;
+IF NOT EXISTS (SELECT * FROM METODO_PAGO WHERE IdMetodoPago = 1)
+BEGIN
+    SET IDENTITY_INSERT METODO_PAGO ON;
+    INSERT INTO METODO_PAGO (IdMetodoPago, Nombre) VALUES
+    (1, 'Efectivo'),
+    (2, 'Tarjeta de Crédito'),
+    (3, 'Tarjeta de Débito'),
+    (4, 'Pago Web');
+    SET IDENTITY_INSERT METODO_PAGO OFF;
+END
+GO
+
+-- Actualización idempotente: si el script ya se había corrido antes con los
+-- nombres anteriores ('Tarjeta', 'SINPE'), se renombran a los que exige el Avance 5.
+UPDATE METODO_PAGO SET Nombre = 'Efectivo'           WHERE IdMetodoPago = 1 AND Nombre <> 'Efectivo';
+UPDATE METODO_PAGO SET Nombre = 'Tarjeta de Crédito' WHERE IdMetodoPago = 2 AND Nombre <> 'Tarjeta de Crédito';
+UPDATE METODO_PAGO SET Nombre = 'Tarjeta de Débito'  WHERE IdMetodoPago = 3 AND Nombre <> 'Tarjeta de Débito';
+
+-- Si el script ya se había corrido antes de agregar "Pago Web", lo inserta ahora.
+IF NOT EXISTS (SELECT * FROM METODO_PAGO WHERE Nombre = 'Pago Web')
+BEGIN
+    SET IDENTITY_INSERT METODO_PAGO ON;
+    INSERT INTO METODO_PAGO (IdMetodoPago, Nombre) VALUES (4, 'Pago Web');
+    SET IDENTITY_INSERT METODO_PAGO OFF;
+END
 GO
 
 /* ============================

@@ -5,6 +5,8 @@ using Sal_Fuego.Aplication.Config;
 using Sal_Fuego.Aplication.Profiles;
 using Sal_Fuego.Aplication.Services.Implementations;
 using Sal_Fuego.Aplication.Services.Interfaces;
+using Sal_Fuego.Infraestructure.ExternalServices.Implementations;
+using Sal_Fuego.Infraestructure.ExternalServices.Interfaces;
 using Sal_Fuego.Infraestructure.Repository.Implementations;
 using Sal_Fuego.Infraestructure.Repository.Interfaces;
 using SalYFuego.Infraestructure.Data;
@@ -45,6 +47,15 @@ builder.Services.AddScoped<IServiceRol, ServiceRol>();
 builder.Services.AddScoped<IServicePedido, ServicePedido>();
 builder.Services.AddScoped<IServiceMetodoPago, ServiceMetodoPago>();
 builder.Services.AddScoped<IServiceEstadoPedido, ServiceEstadoPedido>();
+builder.Services.AddScoped<IServiceClima, ServiceClima>();
+
+// Web Service externo consumido: Open-Meteo (clima), gratuito y sin API key.
+// HttpClient tipado con timeout corto para no colgar la pantalla si no responde.
+builder.Services.AddHttpClient<IOpenMeteoClient, OpenMeteoClient>(client =>
+{
+    client.BaseAddress = new Uri("https://api.open-meteo.com/");
+    client.Timeout = TimeSpan.FromSeconds(5);
+});
 
 // Registro de AutoMapper
 builder.Services.AddAutoMapper(cfg => {

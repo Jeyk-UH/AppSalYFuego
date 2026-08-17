@@ -1,8 +1,9 @@
 /* ============================================================================================
    SAL Y FUEGO — Pedidos de prueba (para Historial y Detalle de Pedido, Avance 5)
    Ejecutar sobre SalYFuegoDB, DESPUÉS de SalYFuegoDB_Maestro.sql y SeedUsuarios.sql.
-   Incluye 5 pedidos con variedad de estado, fecha, cliente (registrado y anónimo) y método
-   de pago, para poder probar el historial, los filtros y el detalle tipo factura.
+   Incluye 5 pedidos con variedad de estado (real, ver ESTADO_PEDIDO), método de entrega
+   (recogida/domicilio), cliente (registrado y anónimo) y método de pago, para poder probar
+   el historial, los filtros, el detalle tipo factura y el cobro de pedidos pendientes.
 ============================================================================================ */
 
 USE SalYFuegoDB;
@@ -13,12 +14,13 @@ DECLARE @IdAdmin INT = (SELECT IdUsuario FROM USUARIO WHERE Correo = 'admin@saly
 DECLARE @IdEncargado INT = (SELECT IdUsuario FROM USUARIO WHERE Correo = 'encargado@salyfuego.com');
 
 /* ------------------------------------------------------------------
-   Pedido 1: Cliente registrado, Entregada, hace 5 días, pago en efectivo
+   Pedido 1: Cliente registrado, Recogida en tienda, Retirado (10),
+   hace 5 días, pago en efectivo
 ------------------------------------------------------------------ */
 INSERT INTO PEDIDO (CodigoOrden, FechaPedido, OrigenPedido, MetodoEntrega, Subtotal, Impuesto, CostoEnvio, Total,
                      IdEstado, IdEstacionActual, IdCliente, IdEmpleado)
-VALUES ('ORD-SEED0001', DATEADD(DAY, -5, GETDATE()), 'Caja', 'Local', 5100.00, 663.00, 0, 5763.00,
-        5, 3, @IdCliente, @IdEncargado);
+VALUES ('ORD-SEED0001', DATEADD(DAY, -5, GETDATE()), 'Caja', 'Recogida en tienda', 5100.00, 663.00, 0, 5763.00,
+        10, 3, @IdCliente, @IdEncargado);
 
 DECLARE @Pedido1 INT = SCOPE_IDENTITY();
 
@@ -30,12 +32,13 @@ INSERT INTO PAGO (MontoPagado, Vuelto, TipoTarjeta, UltimosDigitos, FechaPago, I
 VALUES (6000.00, 237.00, NULL, NULL, DATEADD(DAY, -5, GETDATE()), @Pedido1, 1);
 
 /* ------------------------------------------------------------------
-   Pedido 2: Cliente registrado, Preparación, hoy, pago con tarjeta de crédito
+   Pedido 2: Cliente registrado, Entrega a domicilio, En Preparación (3),
+   hoy, pago con tarjeta de crédito (cobro simulado en línea)
 ------------------------------------------------------------------ */
 INSERT INTO PEDIDO (CodigoOrden, FechaPedido, OrigenPedido, MetodoEntrega, Subtotal, Impuesto, CostoEnvio, Total,
                      IdEstado, IdEstacionActual, IdCliente, IdEmpleado)
-VALUES ('ORD-SEED0002', GETDATE(), 'Caja', 'Local', 4500.00, 585.00, 0, 5085.00,
-        3, 2, @IdCliente, @IdEncargado);
+VALUES ('ORD-SEED0002', GETDATE(), 'Cliente', 'Entrega a domicilio', 4500.00, 585.00, 1500.00, 6585.00,
+        3, 2, @IdCliente, NULL);
 
 DECLARE @Pedido2 INT = SCOPE_IDENTITY();
 
@@ -43,14 +46,16 @@ INSERT INTO DETALLE_PEDIDO (Cantidad, PrecioUnitario, Subtotal, Observaciones, I
 (1, 4500.00, 4500.00, NULL, @Pedido2, NULL, 1);
 
 INSERT INTO PAGO (MontoPagado, Vuelto, TipoTarjeta, UltimosDigitos, FechaPago, IdPedido, IdMetodoPago)
-VALUES (5085.00, 0.00, 'Crédito', '4242', GETDATE(), @Pedido2, 2);
+VALUES (6585.00, 0.00, 'Crédito', '4242', GETDATE(), @Pedido2, 4);
 
 /* ------------------------------------------------------------------
-   Pedido 3: Cliente anónimo (con cédula), Pendiente de Pago, hace 1 día
+   Pedido 3: Cliente anónimo (con cédula), Recogida en tienda,
+   Pendiente de Pago (1), hace 1 día — SIN registro de Pago todavía
+   (paga en efectivo al retirar; pendiente de que Encargado lo cobre)
 ------------------------------------------------------------------ */
 INSERT INTO PEDIDO (CodigoOrden, FechaPedido, OrigenPedido, MetodoEntrega, Subtotal, Impuesto, CostoEnvio, Total,
                      IdEstado, IdEstacionActual, IdCliente, IdEmpleado, NombreClienteInvitado, CedulaClienteInvitado)
-VALUES ('ORD-SEED0003', DATEADD(DAY, -1, GETDATE()), 'Caja', 'Para llevar', 7200.00, 936.00, 0, 8136.00,
+VALUES ('ORD-SEED0003', DATEADD(DAY, -1, GETDATE()), 'Caja', 'Recogida en tienda', 7200.00, 936.00, 0, 8136.00,
         1, 1, NULL, @IdEncargado, 'María Solano', '2-0456-0789');
 
 DECLARE @Pedido3 INT = SCOPE_IDENTITY();
@@ -59,15 +64,13 @@ INSERT INTO DETALLE_PEDIDO (Cantidad, PrecioUnitario, Subtotal, Observaciones, I
 (2, 3000.00, 6000.00, NULL, @Pedido3, 2, NULL),
 (2, 600.00,  1200.00, NULL, @Pedido3, 5, NULL);
 
-INSERT INTO PAGO (MontoPagado, Vuelto, TipoTarjeta, UltimosDigitos, FechaPago, IdPedido, IdMetodoPago)
-VALUES (8200.00, 64.00, NULL, NULL, DATEADD(DAY, -1, GETDATE()), @Pedido3, 1);
-
 /* ------------------------------------------------------------------
-   Pedido 4: Cliente anónimo (sin cédula), Aceptada, hace 2 días, SINPE
+   Pedido 4: Cliente anónimo (sin cédula), Recogida en tienda, Pagado (2),
+   hace 2 días, tarjeta de débito
 ------------------------------------------------------------------ */
 INSERT INTO PEDIDO (CodigoOrden, FechaPedido, OrigenPedido, MetodoEntrega, Subtotal, Impuesto, CostoEnvio, Total,
                      IdEstado, IdEstacionActual, IdCliente, IdEmpleado, NombreClienteInvitado, CedulaClienteInvitado)
-VALUES ('ORD-SEED0004', DATEADD(DAY, -2, GETDATE()), 'Caja', 'Local', 4000.00, 520.00, 0, 4520.00,
+VALUES ('ORD-SEED0004', DATEADD(DAY, -2, GETDATE()), 'Caja', 'Recogida en tienda', 4000.00, 520.00, 0, 4520.00,
         2, 2, NULL, @IdAdmin, 'Carlos Vindas', NULL);
 
 DECLARE @Pedido4 INT = SCOPE_IDENTITY();
@@ -76,15 +79,16 @@ INSERT INTO DETALLE_PEDIDO (Cantidad, PrecioUnitario, Subtotal, Observaciones, I
 (1, 4000.00, 4000.00, NULL, @Pedido4, NULL, 2);
 
 INSERT INTO PAGO (MontoPagado, Vuelto, TipoTarjeta, UltimosDigitos, FechaPago, IdPedido, IdMetodoPago)
-VALUES (4520.00, 0.00, NULL, NULL, DATEADD(DAY, -2, GETDATE()), @Pedido4, 3);
+VALUES (4520.00, 0.00, 'Débito', '3021', DATEADD(DAY, -2, GETDATE()), @Pedido4, 3);
 
 /* ------------------------------------------------------------------
-   Pedido 5: Cliente registrado, Procesando, hace 3 días, tarjeta de débito
+   Pedido 5: Cliente registrado, Entrega a domicilio, Entregado (9),
+   hace 3 días, tarjeta de débito
 ------------------------------------------------------------------ */
 INSERT INTO PEDIDO (CodigoOrden, FechaPedido, OrigenPedido, MetodoEntrega, Subtotal, Impuesto, CostoEnvio, Total,
                      IdEstado, IdEstacionActual, IdCliente, IdEmpleado)
-VALUES ('ORD-SEED0005', DATEADD(DAY, -3, GETDATE()), 'Caja', 'Local', 7500.00, 975.00, 0, 8475.00,
-        4, 2, @IdCliente, @IdAdmin);
+VALUES ('ORD-SEED0005', DATEADD(DAY, -3, GETDATE()), 'Cliente', 'Entrega a domicilio', 7500.00, 975.00, 1500.00, 9975.00,
+        9, 2, @IdCliente, NULL);
 
 DECLARE @Pedido5 INT = SCOPE_IDENTITY();
 
@@ -93,6 +97,6 @@ INSERT INTO DETALLE_PEDIDO (Cantidad, PrecioUnitario, Subtotal, Observaciones, I
 (1, 4000.00, 4000.00, 'Extra queso', @Pedido5, NULL, 2);
 
 INSERT INTO PAGO (MontoPagado, Vuelto, TipoTarjeta, UltimosDigitos, FechaPago, IdPedido, IdMetodoPago)
-VALUES (8475.00, 0.00, 'Débito', '1188', DATEADD(DAY, -3, GETDATE()), @Pedido5, 2);
+VALUES (9975.00, 0.00, 'Débito', '1188', DATEADD(DAY, -3, GETDATE()), @Pedido5, 4);
 
 GO

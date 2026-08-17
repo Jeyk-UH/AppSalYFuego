@@ -1,7 +1,23 @@
 @model Sal_Fuego.Aplication.DTOs.PedidoDetalleDTO
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Xsrf
 
 @{
     ViewData["Title"] = $"Pedido {Model.CodigoOrden}";
+    bool esStaff = (bool)(ViewBag.EsStaff ?? false);
+    var csrfToken = Xsrf.GetAndStoreTokens(Context).RequestToken;
+
+    var estadosJson = esStaff
+        ? System.Text.Json.JsonSerializer.Serialize(
+            ((ICollection<Sal_Fuego.Aplication.DTOs.EstadoPedidoDTO>)ViewBag.Estados)
+                .Select(e => new { id = e.IdEstado, nombre = e.Nombre }))
+        : "[]";
+
+    bool puedeCobrar = esStaff && Model.EstadoNombre == "Pendiente de Pago";
+    var metodosPagoJson = puedeCobrar
+        ? System.Text.Json.JsonSerializer.Serialize(
+            ((ICollection<Sal_Fuego.Aplication.DTOs.MetodoPagoDTO>)ViewBag.MetodosPago)
+                .Select(m => new { id = m.IdMetodoPago, nombre = m.Nombre }))
+        : "[]";
 }
 
 <div class="container mt-4" style="max-width: 900px;">
@@ -39,8 +55,33 @@
                 </div>
                 <div class="col-md-4">
                     <div class="text-muted small text-uppercase">Estado</div>
-                    <span class="badge bg-dark">@Model.EstadoNombre</span>
+                    <span class="badge bg-dark" id="badgeEstado">@Model.EstadoNombre</span>
                 </div>
+
+                @if (puedeCobrar)
+                {
+                    <div class="col-md-8">
+                        <div class="text-muted small text-uppercase mb-1">Pago pendiente</div>
+                        <button type="button" id="btnCobrar" class="btn btn-sm"
+                                style="background-color:#f5a623; color:#1a1a1a; font-weight:bold;">
+                            Cobrar
+                        </button>
+                    </div>
+                }
+
+                @if (esStaff)
+                {
+                    <div class="col-md-8">
+                        <div class="text-muted small text-uppercase mb-1">Cambiar estado</div>
+                        <div class="d-flex gap-2">
+                            <select id="selectNuevoEstado" class="form-select form-select-sm" style="max-width: 260px;"></select>
+                            <button type="button" id="btnGuardarEstado" class="btn btn-sm"
+                                    style="background-color:#f5a623; color:#1a1a1a; font-weight:bold;">
+                                Actualizar
+                            </button>
+                        </div>
+                    </div>
+                }
             </div>
         </div>
     </div>
@@ -97,3 +138,204 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        const esStaff = @Html.Raw(esStaff ? "true" : "false");
+        const puedeCobrar = @Html.Raw(puedeCobrar ? "true" : "false");
+
+        if (puedeCobrar) {
+            const metodosPago = @Html.Raw(metodosPagoJson);
+            const csrfTokenCobrar = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(csrfToken));
+            const idPedidoCobrar = @Model.IdPedido;
+            const totalPedido = @Model.Total.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+            document.getElementById('btnCobrar').addEventListener('click', function () {
+                Swal.fire({
+                    title: 'Cobrar pedido',
+                    html: `
+                        <div class="text-start">
+                            <p class="h4 text-center" style="color:#f5a623;">₡${totalPedido.toFixed(2)}</p>
+                            <label class="form-label small">Método de pago</label>
+                            <select id="swalMetodoPago" class="form-select mb-2">
+                                ${metodosPago.map(m => `<option value="${m.id}" data-nombre="${m.nombre}">${m.nombre}</option>`).join('')}
+                            </select>
+                            <div id="swalPanelEfectivo" style="display:none;">
+                                <label class="form-label small">Monto recibido</label>
+                                <input type="number" inputmode="decimal" id="swalMontoPagado" class="form-control mb-2" step="0.01" value="${totalPedido.toFixed(2)}" style="font-size:1.2rem;">
+                                <p class="small mb-0">Vuelto: <span id="swalVuelto">₡0.00</span></p>
+                            </div>
+                        </div>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonText: 'Confirmar cobro',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#f5a623',
+                    cancelButtonColor: '#6c757d',
+                    didOpen: () => {
+                        const selectMetodo = document.getElementById('swalMetodoPago');
+                        const panelEfectivo = document.getElementById('swalPanelEfectivo');
+                        const inputMonto = document.getElementById('swalMontoPagado');
+
+                        const actualizarVuelto = () => {
+                            const pagado = parseFloat(inputMonto.value) || 0;
+                            const vuelto = pagado - totalPedido;
+                            document.getElementById('swalVuelto').textContent = `₡${(vuelto > 0 ? vuelto : 0).toFixed(2)}`;
+                        };
+                        inputMonto.addEventListener('input', actualizarVuelto);
+
+                        const actualizarPaneles = () => {
+                            const nombre = (selectMetodo.selectedOptions[0].dataset.nombre || '').toLowerCase();
+                            const esTarjeta = nombre.includes('tarjeta');
+                            panelEfectivo.style.display = esTarjeta ? 'none' : 'block';
+                            if (!esTarjeta) {
+                                inputMonto.focus();
+                                inputMonto.select();
+                                actualizarVuelto();
+                            }
+                        };
+                        selectMetodo.addEventListener('change', actualizarPaneles);
+                        actualizarPaneles();
+                    },
+                    preConfirm: () => {
+                        const selectMetodo = document.getElementById('swalMetodoPago');
+                        const idMetodoPago = parseInt(selectMetodo.value);
+                        const nombre = selectMetodo.selectedOptions[0].dataset.nombre.toLowerCase();
+                        let montoPagado = totalPedido;
+
+                        // En persona (mostrador) el cliente paga con su tarjeta directo en
+                        // el datáfono: no hace falta digitar nombre ni últimos dígitos.
+                        const tipoTarjeta = nombre.includes('tarjeta')
+                            ? (nombre.includes('débito') ? 'Débito' : 'Crédito')
+                            : null;
+
+                        if (!tipoTarjeta) {
+                            montoPagado = parseFloat(document.getElementById('swalMontoPagado').value) || 0;
+                            if (montoPagado < totalPedido) {
+                                Swal.showValidationMessage('El monto recibido es menor al total.');
+                                return false;
+                            }
+                        }
+
+                        return { idMetodoPago, tipoTarjeta, ultimosDigitos: null, montoPagado };
+                    }
+                }).then(result => {
+                    if (!result.isConfirmed) return;
+                    cobrarPedido(result.value);
+                });
+            });
+
+            async function cobrarPedido({ idMetodoPago, tipoTarjeta, ultimosDigitos, montoPagado }) {
+                try {
+                    const res = await fetch('/Pedido/Cobrar', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfTokenCobrar
+                        },
+                        body: JSON.stringify({ idPedido: idPedidoCobrar, idMetodoPago, tipoTarjeta, ultimosDigitos, montoPagado })
+                    });
+                    const data = await res.json();
+
+                    if (data.exito) {
+                        const r = data.resultado;
+                        document.getElementById('badgeEstado').textContent = 'Pagado';
+                        document.getElementById('btnCobrar').closest('.col-md-8').remove();
+                        await Swal.fire({
+                            icon: 'success',
+                            title: 'Pedido cobrado',
+                            html: `<p class="mb-0">Vuelto: ₡${r.vuelto.toFixed(2)}</p>`,
+                            confirmButtonColor: '#f5a623'
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'No se pudo cobrar el pedido',
+                            text: data.mensaje,
+                            confirmButtonColor: '#2d0000'
+                        });
+                    }
+                } catch (e) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error de conexión',
+                        text: 'No se pudo comunicar con el servidor.',
+                        confirmButtonColor: '#2d0000'
+                    });
+                }
+            }
+        }
+
+        if (esStaff) {
+            const estadosDisponibles = @Html.Raw(estadosJson);
+            const csrfToken = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(csrfToken));
+            const idPedido = @Model.IdPedido;
+
+            const selectEstado = document.getElementById('selectNuevoEstado');
+            estadosDisponibles.forEach(e => {
+                const option = document.createElement('option');
+                option.value = e.id;
+                option.textContent = e.nombre;
+                if (e.nombre === document.getElementById('badgeEstado').textContent.trim()) {
+                    option.selected = true;
+                }
+                selectEstado.appendChild(option);
+            });
+
+            document.getElementById('btnGuardarEstado').addEventListener('click', () => {
+                const idEstadoNuevo = parseInt(selectEstado.value);
+                const nombreNuevo = selectEstado.selectedOptions[0].textContent;
+
+                Swal.fire({
+                    title: 'Cambiar estado del pedido',
+                    text: `¿Confirma cambiar el estado a "${nombreNuevo}"?`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, cambiar',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#f5a623',
+                    cancelButtonColor: '#6c757d'
+                }).then(async result => {
+                    if (!result.isConfirmed) return;
+
+                    try {
+                        const res = await fetch('/Pedido/CambiarEstado', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify({ idPedido, idEstadoNuevo })
+                        });
+                        const data = await res.json();
+
+                        if (data.exito) {
+                            document.getElementById('badgeEstado').textContent = nombreNuevo;
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Estado actualizado',
+                                confirmButtonColor: '#f5a623',
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'No se pudo cambiar el estado',
+                                text: data.mensaje,
+                                confirmButtonColor: '#2d0000'
+                            });
+                        }
+                    } catch (e) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error de conexión',
+                            text: 'No se pudo comunicar con el servidor.',
+                            confirmButtonColor: '#2d0000'
+                        });
+                    }
+                });
+            });
+        }
+    </script>
+}

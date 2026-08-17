@@ -57,8 +57,9 @@ namespace Sal_Fuego.Infraestructure.Repository.Implementations
                 .ToListAsync();
         }
 
-        // Historial completo (Encargado/Administrador), con filtro opcional por fecha y estado
-        public async Task<ICollection<Pedido>> ListarTodosAsync(DateTime? fecha, int? idEstado)
+        // Historial completo (Encargado/Administrador), con filtro opcional por fecha, estado,
+        // y exclusión de un estado (usado para "ocultar entregados")
+        public async Task<ICollection<Pedido>> ListarTodosAsync(DateTime? fecha, int? idEstado, int[]? idsEstadoExcluir = null)
         {
             var query = _context.Set<Pedido>()
                 .Include(p => p.IdClienteNavigation)
@@ -71,9 +72,37 @@ namespace Sal_Fuego.Infraestructure.Repository.Implementations
             if (idEstado.HasValue)
                 query = query.Where(p => p.IdEstado == idEstado.Value);
 
+            if (idsEstadoExcluir is { Length: > 0 })
+                query = query.Where(p => !idsEstadoExcluir.Contains(p.IdEstado));
+
             return await query
                 .OrderByDescending(p => p.FechaPedido)
                 .ToListAsync();
+        }
+
+        // Cola de Cocina: pedidos en alguno de los estados indicados, del más antiguo al
+        // más reciente (FIFO), con las líneas de detalle ya cargadas para armar la comanda.
+        public async Task<ICollection<Pedido>> ListarPorEstadosAsync(int[] idsEstado)
+        {
+            return await _context.Set<Pedido>()
+                .Include(p => p.IdClienteNavigation)
+                .Include(p => p.IdEstadoNavigation)
+                .Include(p => p.DetallePedido).ThenInclude(d => d.IdProductoNavigation)
+                .Include(p => p.DetallePedido).ThenInclude(d => d.IdComboNavigation)
+                .Where(p => idsEstado.Contains(p.IdEstado))
+                .OrderBy(p => p.FechaPedido)
+                .ToListAsync();
+        }
+
+        // Pedido liviano (sin includes) trackeado por EF, para actualizar solo su estado
+        public async Task<Pedido?> FindParaActualizarEstadoAsync(int id)
+        {
+            return await _context.Set<Pedido>().FirstOrDefaultAsync(p => p.IdPedido == id);
+        }
+
+        public async Task GuardarCambiosEstadoAsync()
+        {
+            await _context.SaveChangesAsync();
         }
 
         // Pedido completo para armar el detalle en formato de factura

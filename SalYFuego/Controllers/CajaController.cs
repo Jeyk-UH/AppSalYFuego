@@ -30,7 +30,8 @@ namespace Sal_Fuego.Controllers
         public async Task<IActionResult> Index()
         {
             var catalogo = await _servicePedido.ObtenerCatalogoVentaAsync();
-            ViewBag.MetodosPago = await _serviceMetodoPago.ListAsync();
+            ViewBag.MetodosPago = await _serviceMetodoPago.ListPresencialAsync();
+            ViewBag.CostoEnvioDomicilio = TarifasEnvio.CostoDomicilio;
             return View(catalogo);
         }
 
