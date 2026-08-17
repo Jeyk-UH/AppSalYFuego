@@ -27,9 +27,9 @@ namespace Sal_Fuego.Controllers
         }
 
         // Historial: el comportamiento depende del rol del usuario logueado.
-        // Para Encargado/Administrador, "soloActivos" empieza en true para que los
-        // pedidos recién hechos no se "pierdan" de vista entre el resto del historial.
-        public async Task<IActionResult> Index(DateTime? fecha, int? idEstado, bool soloActivos = true)
+        // Encargado/Administrador ven el tablero por estado (vista principal);
+        // el Cliente ve su propio historial simple.
+        public async Task<IActionResult> Index()
         {
             bool esStaff = EsStaff();
             ViewBag.EsStaff = esStaff;
@@ -37,12 +37,8 @@ namespace Sal_Fuego.Controllers
             if (esStaff)
             {
                 ViewBag.Estados = await _serviceEstadoPedido.ListAsync();
-                ViewBag.FechaSeleccionada = fecha?.ToString("yyyy-MM-dd");
-                ViewBag.EstadoSeleccionado = idEstado;
-                ViewBag.SoloActivos = soloActivos;
-
-                var pedidos = await _servicePedido.ObtenerHistorialTodosAsync(fecha, idEstado, soloActivos);
-                return View(pedidos);
+                var tablero = await _servicePedido.ObtenerTableroAsync();
+                return View("Tablero", tablero);
             }
 
             var idCliente = ObtenerIdUsuarioActual();
@@ -50,7 +46,24 @@ namespace Sal_Fuego.Controllers
             return View(propios);
         }
 
-        // Igual que Index, pero devuelve JSON para refrescar la tabla sin recargar la página
+        // Lista con filtros de fecha/estado/solo activos (Encargado/Administrador), para
+        // buscar un pedido puntual, incluidos los ya finalizados. Accesible desde el tablero.
+        public async Task<IActionResult> Lista(DateTime? fecha, int? idEstado, bool soloActivos = true)
+        {
+            if (!EsStaff())
+                return Forbid();
+
+            ViewBag.EsStaff = true;
+            ViewBag.Estados = await _serviceEstadoPedido.ListAsync();
+            ViewBag.FechaSeleccionada = fecha?.ToString("yyyy-MM-dd");
+            ViewBag.EstadoSeleccionado = idEstado;
+            ViewBag.SoloActivos = soloActivos;
+
+            var pedidos = await _servicePedido.ObtenerHistorialTodosAsync(fecha, idEstado, soloActivos);
+            return View(pedidos);
+        }
+
+        // Igual que Lista, pero devuelve JSON para refrescar la tabla sin recargar la página
         // (solo lo usan Encargado/Administrador desde los filtros)
         [HttpGet]
         public async Task<IActionResult> Filtrar(DateTime? fecha, int? idEstado, bool soloActivos = false)
@@ -60,6 +73,17 @@ namespace Sal_Fuego.Controllers
 
             var pedidos = await _servicePedido.ObtenerHistorialTodosAsync(fecha, idEstado, soloActivos);
             return Json(pedidos);
+        }
+
+        // Refresca el tablero sin recargar la página (tras cambiar el estado de un pedido)
+        [HttpGet]
+        public async Task<IActionResult> ObtenerTablero()
+        {
+            if (!EsStaff())
+                return Forbid();
+
+            var tablero = await _servicePedido.ObtenerTableroAsync();
+            return Json(tablero);
         }
 
         // Detalle de un pedido en formato de factura

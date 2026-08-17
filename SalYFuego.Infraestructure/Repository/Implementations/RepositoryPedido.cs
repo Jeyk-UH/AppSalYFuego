@@ -87,10 +87,24 @@ namespace Sal_Fuego.Infraestructure.Repository.Implementations
             return await _context.Set<Pedido>()
                 .Include(p => p.IdClienteNavigation)
                 .Include(p => p.IdEstadoNavigation)
+                .Include(p => p.IdDireccionEntregaNavigation)
                 .Include(p => p.DetallePedido).ThenInclude(d => d.IdProductoNavigation)
                 .Include(p => p.DetallePedido).ThenInclude(d => d.IdComboNavigation)
                 .Where(p => idsEstado.Contains(p.IdEstado))
                 .OrderBy(p => p.FechaPedido)
+                .ToListAsync();
+        }
+
+        // Los "top" pedidos más recientes entre los estados indicados (fecha descendente).
+        // Usado para la columna "Finalizado" del tablero: solo los últimos N.
+        public async Task<ICollection<Pedido>> ListarUltimosPorEstadosAsync(int[] idsEstado, int top)
+        {
+            return await _context.Set<Pedido>()
+                .Include(p => p.IdClienteNavigation)
+                .Include(p => p.IdEstadoNavigation)
+                .Where(p => idsEstado.Contains(p.IdEstado))
+                .OrderByDescending(p => p.FechaPedido)
+                .Take(top)
                 .ToListAsync();
         }
 

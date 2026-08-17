@@ -28,12 +28,24 @@ namespace Sal_Fuego.Aplication.Services.Interfaces
         // estado, y "solo activos" (oculta los pedidos ya Entregados)
         Task<ICollection<PedidoListaDTO>> ObtenerHistorialTodosAsync(DateTime? fecha, int? idEstado, bool soloActivos = false);
 
+        // Tablero de Encargado/Administrador: todos los pedidos activos (agrupables por
+        // estado) más los últimos 10 ya finalizados (Entregado o Retirado).
+        Task<TableroPedidosDTO> ObtenerTableroAsync();
+
         // Detalle de un pedido en formato de factura
         Task<PedidoDetalleDTO?> ObtenerDetalleAsync(int idPedido);
 
-        // Cola de Cocina: pedidos Aceptados o en Preparación, del más antiguo al más
+        // Cola de Cocina: pedidos Pagados o en Preparación, del más antiguo al más
         // reciente (FIFO)
         Task<ICollection<PedidoColaDTO>> ObtenerColaCocinaAsync();
+
+        // Cola de Salón: pedidos Preparados (a empacar) y Listos para Retirar (a
+        // entregar en mostrador), del más antiguo al más reciente
+        Task<ICollection<PedidoColaDTO>> ObtenerColaSalonAsync();
+
+        // Cola de Repartidor: pedidos En Espera Repartidor (a recoger) y En Ruta (a
+        // marcar entregado), del más antiguo al más reciente
+        Task<ICollection<PedidoColaDTO>> ObtenerColaRepartidorAsync();
 
         // Avanza el pedido al siguiente estado de la secuencia (usado por Cocina).
         // Devuelve el nuevo IdEstado.

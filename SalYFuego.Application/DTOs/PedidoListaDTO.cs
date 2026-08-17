@@ -7,7 +7,9 @@ namespace Sal_Fuego.Aplication.DTOs
         public string CodigoOrden { get; set; } = null!;
         public DateTime FechaPedido { get; set; }
         public string ClienteNombre { get; set; } = null!;
+        public int IdEstado { get; set; }
         public string EstadoNombre { get; set; } = null!;
+        public string MetodoEntrega { get; set; } = null!;
         public decimal Total { get; set; }
     }
 }

@@ -1,13 +1,192 @@
+@model ICollection<Sal_Fuego.Aplication.DTOs.PedidoColaDTO>
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Xsrf
+
 @{
     ViewData["Title"] = "Mis Entregas";
+    var csrfToken = Xsrf.GetAndStoreTokens(Context).RequestToken;
+
+    var colaJson = System.Text.Json.JsonSerializer.Serialize(
+        Model.Select(p => new
+        {
+            idPedido = p.IdPedido,
+            codigoOrden = p.CodigoOrden,
+            fechaPedido = p.FechaPedido,
+            clienteNombre = p.ClienteNombre,
+            idEstado = p.IdEstado,
+            estadoNombre = p.EstadoNombre,
+            direccionEntrega = p.DireccionEntrega,
+            lineas = p.Lineas.Select(l => new { nombre = l.Nombre, cantidad = l.Cantidad, observaciones = l.Observaciones })
+        }));
 }
 
-<div class="container mt-5 text-center">
-    <h1 style="color:#1a1a1a;">Mis Entregas</h1>
-    <p class="text-muted">
-        Bienvenido, @User.Identity!.Name. Acá vas a ver los pedidos de delivery que se te asignen.
-    </p>
-    <div class="alert alert-warning d-inline-block mt-3">
-        Próximamente: módulo de Pedidos y Entregas.
+<style>
+    .tarjeta-pedido {
+        border-left: 6px solid #f5a623;
+    }
+
+    .badge-posicion {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: #1a1a1a;
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+
+    .btn-avanzar {
+        min-height: 48px;
+        font-weight: bold;
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="mb-0">Mis Entregas</h1>
+            <p class="text-muted small mb-0">Cola compartida de entregas a domicilio: cualquier repartidor puede tomar un pedido.</p>
+        </div>
+        <button type="button" id="btnActualizar" class="btn btn-outline-secondary">
+            Actualizar
+        </button>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <h5>Para recoger</h5>
+            <div id="colaRecoger" class="row g-3"></div>
+        </div>
+        <div class="col-lg-6">
+            <h5>En ruta</h5>
+            <div id="colaRuta" class="row g-3"></div>
+        </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        let cola = @Html.Raw(colaJson);
+        const csrfToken = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(csrfToken));
+
+        // 5 = En Espera Repartidor, 6 = En Ruta (ver ESTADO_PEDIDO en SalYFuegoDB_Maestro.sql)
+        const ID_EN_ESPERA_REPARTIDOR = 5;
+        const ID_EN_RUTA = 6;
+
+        function formatoHora(iso) {
+            const d = new Date(iso);
+            return d.toLocaleTimeString('es-CR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function textoBoton(p) {
+            return p.idEstado === ID_EN_ESPERA_REPARTIDOR ? 'Salir a entregar' : 'Marcar entregado';
+        }
+
+        function tarjetaHtml(p, idx) {
+            return `
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100 tarjeta-pedido">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge-posicion">${idx + 1}</span>
+                                    <div>
+                                        <div class="fw-bold">${p.codigoOrden}</div>
+                                        <div class="small text-muted">${formatoHora(p.fechaPedido)} &middot; <span class="nombre-cliente"></span></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="small mb-2 direccion-entrega"></div>
+
+                            <ul class="list-unstyled small mb-3 lineas-pedido"></ul>
+
+                            <button type="button" class="btn w-100 btn-avanzar"
+                                    style="background-color:#f5a623; color:#1a1a1a;"
+                                    data-id="${p.idPedido}">
+                                ${textoBoton(p)}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderColumna(contId, pedidos) {
+            const cont = document.getElementById(contId);
+
+            if (pedidos.length === 0) {
+                cont.innerHTML = '<div class="col-12"><p class="text-muted text-center my-4">Sin pedidos.</p></div>';
+                return;
+            }
+
+            cont.innerHTML = pedidos.map((p, idx) => tarjetaHtml(p, idx)).join('');
+
+            cont.querySelectorAll('.card').forEach((card, idx) => {
+                card.querySelector('.nombre-cliente').textContent = pedidos[idx].clienteNombre;
+                card.querySelector('.direccion-entrega').textContent =
+                    pedidos[idx].direccionEntrega ? `Dirección: ${pedidos[idx].direccionEntrega}` : '';
+
+                const lista = card.querySelector('.lineas-pedido');
+                pedidos[idx].lineas.forEach(l => {
+                    const li = document.createElement('li');
+                    li.className = 'border-bottom py-1';
+                    li.textContent = l.observaciones ? `${l.cantidad} x ${l.nombre} — ${l.observaciones}` : `${l.cantidad} x ${l.nombre}`;
+                    lista.appendChild(li);
+                });
+            });
+
+            cont.querySelectorAll('.btn-avanzar').forEach(btn => {
+                btn.addEventListener('click', () => avanzarPedido(parseInt(btn.dataset.id)));
+            });
+        }
+
+        function renderCola() {
+            renderColumna('colaRecoger', cola.filter(p => p.idEstado === ID_EN_ESPERA_REPARTIDOR));
+            renderColumna('colaRuta', cola.filter(p => p.idEstado === ID_EN_RUTA));
+        }
+
+        async function avanzarPedido(idPedido) {
+            try {
+                const res = await fetch('/Repartidor/Avanzar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify(idPedido)
+                });
+                const data = await res.json();
+
+                if (data.exito) {
+                    await actualizarCola();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'No se pudo actualizar el pedido',
+                        text: data.mensaje,
+                        confirmButtonColor: '#2d0000'
+                    });
+                }
+            } catch (e) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de conexión',
+                    text: 'No se pudo comunicar con el servidor.',
+                    confirmButtonColor: '#2d0000'
+                });
+            }
+        }
+
+        async function actualizarCola() {
+            const res = await fetch('/Repartidor/ObtenerCola');
+            cola = await res.json();
+            renderCola();
+        }
+
+        document.getElementById('btnActualizar').addEventListener('click', actualizarCola);
+
+        renderCola();
+    </script>
+}

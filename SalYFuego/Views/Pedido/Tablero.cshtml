@@ -1,0 +1,248 @@
+@model Sal_Fuego.Aplication.DTOs.TableroPedidosDTO
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Xsrf
+
+@{
+    ViewData["Title"] = "Pedidos";
+    var csrfToken = Xsrf.GetAndStoreTokens(Context).RequestToken;
+
+    // Columnas del tablero: todos los estados menos los terminales (esos van
+    // aparte, agrupados en la columna "Finalizado" con solo los últimos 10).
+    var columnasJson = System.Text.Json.JsonSerializer.Serialize(
+        ((ICollection<Sal_Fuego.Aplication.DTOs.EstadoPedidoDTO>)ViewBag.Estados)
+            .Where(e => e.Nombre != "Entregado" && e.Nombre != "Retirado")
+            .OrderBy(e => e.IdEstado)
+            .Select(e => new { id = e.IdEstado, nombre = e.Nombre }));
+
+    // Para el selector "Cambiar estado" de cada tarjeta sí se listan los 10.
+    var estadosJson = System.Text.Json.JsonSerializer.Serialize(
+        ((ICollection<Sal_Fuego.Aplication.DTOs.EstadoPedidoDTO>)ViewBag.Estados)
+            .OrderBy(e => e.IdEstado)
+            .Select(e => new { id = e.IdEstado, nombre = e.Nombre }));
+
+    static object MapPedido(Sal_Fuego.Aplication.DTOs.PedidoListaDTO p) => new
+    {
+        idPedido = p.IdPedido,
+        codigoOrden = p.CodigoOrden,
+        fechaPedido = p.FechaPedido,
+        clienteNombre = p.ClienteNombre,
+        idEstado = p.IdEstado,
+        estadoNombre = p.EstadoNombre,
+        metodoEntrega = p.MetodoEntrega,
+        total = p.Total
+    };
+
+    var activosJson = System.Text.Json.JsonSerializer.Serialize(Model.Activos.Select(MapPedido));
+    var finalizadosJson = System.Text.Json.JsonSerializer.Serialize(Model.Finalizados.Select(MapPedido));
+}
+
+<style>
+    .tablero-scroll {
+        display: flex;
+        gap: 1rem;
+        overflow-x: auto;
+        padding-bottom: 1rem;
+    }
+
+    .columna-estado {
+        flex: 0 0 280px;
+        display: flex;
+        flex-direction: column;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        max-height: calc(100vh - 220px);
+    }
+
+    .columna-header {
+        padding: 0.75rem 1rem;
+        border-bottom: 2px solid #f5a623;
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .columna-cuerpo {
+        overflow-y: auto;
+        padding: 0.5rem;
+        flex: 1;
+    }
+
+    .tarjeta-pedido {
+        background: #fff;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0,0,0,.15);
+        padding: 0.6rem 0.75rem;
+        margin-bottom: 0.6rem;
+        font-size: 0.85rem;
+    }
+</style>
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">Pedidos</h1>
+        <div class="d-flex gap-2">
+            <a asp-controller="Pedido" asp-action="Lista" class="btn btn-outline-secondary">
+                Ver lista / buscar
+            </a>
+            <button type="button" id="btnActualizarTablero" class="btn btn-outline-secondary">
+                Actualizar
+            </button>
+        </div>
+    </div>
+
+    <div id="tableroScroll" class="tablero-scroll"></div>
+</div>
+
+@section Scripts {
+    <script>
+        const columnas = @Html.Raw(columnasJson);
+        const estadosDisponibles = @Html.Raw(estadosJson);
+        const csrfToken = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(csrfToken));
+        let activos = @Html.Raw(activosJson);
+        let finalizados = @Html.Raw(finalizadosJson);
+
+        function formatoHora(iso) {
+            const d = new Date(iso);
+            return d.toLocaleDateString('es-CR') + ' ' + d.toLocaleTimeString('es-CR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function tarjetaHtml(p) {
+            return `
+                <div class="tarjeta-pedido" data-id-pedido="${p.idPedido}">
+                    <div class="d-flex justify-content-between">
+                        <strong>${p.codigoOrden}</strong>
+                        <span class="text-muted">${formatoHora(p.fechaPedido)}</span>
+                    </div>
+                    <div class="cliente-nombre"></div>
+                    <div class="text-muted">${p.metodoEntrega}</div>
+                    <div class="fw-bold" style="color:#f5a623;">₡${p.total.toLocaleString('es-CR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                    <a href="/Pedido/Detalle/${p.idPedido}" class="small d-block mb-2">Ver detalle</a>
+                    <div class="d-flex gap-1">
+                        <select class="form-select form-select-sm select-nuevo-estado"></select>
+                        <button type="button" class="btn btn-sm btn-guardar-estado"
+                                style="background-color:#f5a623; color:#1a1a1a; font-weight:bold;">
+                            OK
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderTablero() {
+            const cont = document.getElementById('tableroScroll');
+
+            const columnasHtml = columnas.map(col => {
+                const pedidosCol = activos.filter(p => p.idEstado === col.id);
+                return `
+                    <div class="columna-estado">
+                        <div class="columna-header">
+                            <span>${col.nombre}</span>
+                            <span class="badge bg-dark">${pedidosCol.length}</span>
+                        </div>
+                        <div class="columna-cuerpo" data-col="${col.id}">
+                            ${pedidosCol.length === 0
+                                ? '<p class="text-muted small text-center my-3">Sin pedidos</p>'
+                                : pedidosCol.map(tarjetaHtml).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const finalizadoHtml = `
+                <div class="columna-estado">
+                    <div class="columna-header">
+                        <span>Finalizado</span>
+                        <span class="badge bg-dark">últimos ${finalizados.length}</span>
+                    </div>
+                    <div class="columna-cuerpo" data-col="finalizado">
+                        ${finalizados.length === 0
+                            ? '<p class="text-muted small text-center my-3">Sin pedidos</p>'
+                            : finalizados.map(tarjetaHtml).join('')}
+                    </div>
+                </div>
+            `;
+
+            cont.innerHTML = columnasHtml + finalizadoHtml;
+
+            // Nombre del cliente y selects se llenan aparte (evita problemas de escape en el template string)
+            const todos = [...activos, ...finalizados];
+            cont.querySelectorAll('.tarjeta-pedido').forEach(tarjeta => {
+                const idPedido = parseInt(tarjeta.dataset.idPedido);
+                const pedido = todos.find(p => p.idPedido === idPedido);
+                tarjeta.querySelector('.cliente-nombre').textContent = pedido.clienteNombre;
+
+                const select = tarjeta.querySelector('.select-nuevo-estado');
+                estadosDisponibles.forEach(e => {
+                    const option = document.createElement('option');
+                    option.value = e.id;
+                    option.textContent = e.nombre;
+                    if (e.id === pedido.idEstado) option.selected = true;
+                    select.appendChild(option);
+                });
+
+                tarjeta.querySelector('.btn-guardar-estado').addEventListener('click', () => cambiarEstadoTarjeta(pedido, select));
+            });
+        }
+
+        async function cambiarEstadoTarjeta(pedido, select) {
+            const idEstadoNuevo = parseInt(select.value);
+            if (idEstadoNuevo === pedido.idEstado) return;
+
+            const nombreNuevo = select.selectedOptions[0].textContent;
+
+            const confirmacion = await Swal.fire({
+                title: 'Cambiar estado del pedido',
+                text: `¿Confirma cambiar "${pedido.codigoOrden}" a "${nombreNuevo}"?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, cambiar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#f5a623',
+                cancelButtonColor: '#6c757d'
+            });
+            if (!confirmacion.isConfirmed) return;
+
+            try {
+                const res = await fetch('/Pedido/CambiarEstado', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({ idPedido: pedido.idPedido, idEstadoNuevo })
+                });
+                const data = await res.json();
+
+                if (data.exito) {
+                    await actualizarTablero();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'No se pudo cambiar el estado',
+                        text: data.mensaje,
+                        confirmButtonColor: '#2d0000'
+                    });
+                }
+            } catch (e) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de conexión',
+                    text: 'No se pudo comunicar con el servidor.',
+                    confirmButtonColor: '#2d0000'
+                });
+            }
+        }
+
+        async function actualizarTablero() {
+            const res = await fetch('/Pedido/ObtenerTablero');
+            const data = await res.json();
+            activos = data.activos;
+            finalizados = data.finalizados;
+            renderTablero();
+        }
+
+        document.getElementById('btnActualizarTablero').addEventListener('click', actualizarTablero);
+
+        renderTablero();
+    </script>
+}

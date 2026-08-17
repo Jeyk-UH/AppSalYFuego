@@ -18,6 +18,14 @@
             ((ICollection<Sal_Fuego.Aplication.DTOs.MetodoPagoDTO>)ViewBag.MetodosPago)
                 .Select(m => new { id = m.IdMetodoPago, nombre = m.Nombre }))
         : "[]";
+
+    // Línea de tiempo: la secuencia de estados depende del método de entrega
+    // (después de "Preparado" se bifurca entre recogida y domicilio).
+    bool esDomicilio = Model.MetodoEntrega == "Entrega a domicilio";
+    string[] secuenciaEstados = esDomicilio
+        ? new[] { "Pendiente de Pago", "Pagado", "En Preparación", "Preparado", "En Espera Repartidor", "En Ruta", "Entregado" }
+        : new[] { "Pendiente de Pago", "Pagado", "En Preparación", "Preparado", "Listo para Retirar", "Retirado" };
+    int indiceActualEstado = Array.IndexOf(secuenciaEstados, Model.EstadoNombre);
 }
 
 <div class="container mt-4" style="max-width: 900px;">
@@ -27,6 +35,39 @@
         </a>
         <h1 class="mb-0">Pedido @Model.CodigoOrden</h1>
     </div>
+
+    @if (indiceActualEstado >= 0)
+    {
+        <!-- Línea de tiempo del pedido -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="d-flex align-items-start overflow-auto pb-1">
+                    @for (int i = 0; i < secuenciaEstados.Length; i++)
+                    {
+                        bool completado = i < indiceActualEstado;
+                        bool actual = i == indiceActualEstado;
+                        <div class="d-flex flex-column align-items-center" style="min-width: 100px;">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center"
+                                 style="width:30px; height:30px; font-weight:bold; font-size:0.85rem; flex-shrink:0;
+                                        background-color: @((completado || actual) ? "#f5a623" : "#e9ecef");
+                                        color: @((completado || actual) ? "#1a1a1a" : "#adb5bd");
+                                        @(actual ? "box-shadow: 0 0 0 3px rgba(245,166,35,.35);" : "")">
+                                @(i + 1)
+                            </div>
+                            <div class="small text-center mt-1 @(actual ? "fw-bold" : (completado ? "" : "text-muted"))" style="max-width:100px;">
+                                @secuenciaEstados[i]
+                            </div>
+                        </div>
+                        if (i < secuenciaEstados.Length - 1)
+                        {
+                            <div style="height:3px; flex:1; min-width:16px; margin-top:14px;
+                                        background-color: @(i < indiceActualEstado ? "#f5a623" : "#e9ecef");"></div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    }
 
     <!-- Encabezado -->
     <div class="card shadow-sm mb-4">

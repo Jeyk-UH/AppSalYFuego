@@ -404,9 +404,26 @@ namespace Sal_Fuego.Aplication.Services.Implementations
             ClienteNombre = p.IdClienteNavigation?.NombreCompleto
                 ?? p.NombreClienteInvitado
                 ?? "Cliente Anónimo",
+            IdEstado = p.IdEstado,
             EstadoNombre = p.IdEstadoNavigation.Nombre,
+            MetodoEntrega = p.MetodoEntrega,
             Total = p.Total
         };
+
+        // Tablero de Encargado/Administrador: pedidos activos (para agrupar por columna
+        // de estado) más los últimos 10 ya finalizados, para no cargar todo el historial.
+        public async Task<TableroPedidosDTO> ObtenerTableroAsync()
+        {
+            var activos = await _repository.ListarTodosAsync(null, null, EstadosTerminales);
+            var finalizados = await _repository.ListarUltimosPorEstadosAsync(EstadosTerminales, 10);
+
+            return new TableroPedidosDTO
+            {
+                // Del más antiguo al más reciente: el cajero atiende primero lo que lleva más tiempo esperando.
+                Activos = activos.OrderBy(p => p.FechaPedido).Select(MapearALista).ToList(),
+                Finalizados = finalizados.Select(MapearALista).ToList()
+            };
+        }
 
         // Detalle de un pedido en formato de factura, con el impuesto calculado por línea
         public async Task<PedidoDetalleDTO?> ObtenerDetalleAsync(int idPedido)
@@ -446,30 +463,64 @@ namespace Sal_Fuego.Aplication.Services.Implementations
             };
         }
 
-        // Cola de Cocina: pedidos Aceptados o en Preparación, del más antiguo al más
+        // Estados que Salón debe atender: Preparado (para empacar, sea retiro en mostrador
+        // o entrega a repartidor) y Listo para Retirar (para entregar al cliente en sala).
+        private static readonly int[] EstadosColaSalon = { IdEstadoPreparado, IdEstadoListoParaRetirar };
+
+        // Estados que Repartidor debe atender: En Espera Repartidor (para salir a
+        // entregar) y En Ruta (ya en camino, falta marcar entregado).
+        private static readonly int[] EstadosColaRepartidor = { IdEstadoEnEsperaRepartidor, IdEstadoEnRuta };
+
+        // Cola de Cocina: pedidos Pagados o en Preparación, del más antiguo al más
         // reciente (FIFO), sin precios (a Cocina no le hace falta esa información).
         public async Task<ICollection<PedidoColaDTO>> ObtenerColaCocinaAsync()
         {
             var pedidos = await _repository.ListarPorEstadosAsync(EstadosColaCocina);
-
-            return pedidos.Select(p => new PedidoColaDTO
-            {
-                IdPedido = p.IdPedido,
-                CodigoOrden = p.CodigoOrden,
-                FechaPedido = p.FechaPedido,
-                ClienteNombre = p.IdClienteNavigation?.NombreCompleto
-                    ?? p.NombreClienteInvitado
-                    ?? "Cliente Anónimo",
-                IdEstado = p.IdEstado,
-                EstadoNombre = p.IdEstadoNavigation.Nombre,
-                Lineas = p.DetallePedido.Select(d => new DetalleLineaColaDTO
-                {
-                    Nombre = d.IdProductoNavigation?.Nombre ?? d.IdComboNavigation?.Nombre ?? "—",
-                    Cantidad = d.Cantidad,
-                    Observaciones = d.Observaciones
-                }).ToList()
-            }).ToList();
+            return pedidos.Select(MapearACola).ToList();
         }
+
+        // Cola de Salón: pedidos Preparados (a empacar) y Listos para Retirar (a entregar
+        // en mostrador), del más antiguo al más reciente.
+        public async Task<ICollection<PedidoColaDTO>> ObtenerColaSalonAsync()
+        {
+            var pedidos = await _repository.ListarPorEstadosAsync(EstadosColaSalon);
+            return pedidos.Select(MapearACola).ToList();
+        }
+
+        // Cola de Repartidor: pedidos En Espera Repartidor (a recoger) y En Ruta (a
+        // marcar entregado), del más antiguo al más reciente. Es una cola compartida:
+        // no hay asignación de un pedido a un repartidor específico en la base de datos.
+        public async Task<ICollection<PedidoColaDTO>> ObtenerColaRepartidorAsync()
+        {
+            var pedidos = await _repository.ListarPorEstadosAsync(EstadosColaRepartidor);
+            return pedidos.Select(MapearACola).ToList();
+        }
+
+        private static PedidoColaDTO MapearACola(Pedido p) => new()
+        {
+            IdPedido = p.IdPedido,
+            CodigoOrden = p.CodigoOrden,
+            FechaPedido = p.FechaPedido,
+            ClienteNombre = p.IdClienteNavigation?.NombreCompleto
+                ?? p.NombreClienteInvitado
+                ?? "Cliente Anónimo",
+            IdEstado = p.IdEstado,
+            EstadoNombre = p.IdEstadoNavigation.Nombre,
+            MetodoEntrega = p.MetodoEntrega,
+            DireccionEntrega = p.IdDireccionEntregaNavigation == null
+                ? null
+                : $"{p.IdDireccionEntregaNavigation.DireccionExacta}, {p.IdDireccionEntregaNavigation.Distrito}, " +
+                  $"{p.IdDireccionEntregaNavigation.Canton}, {p.IdDireccionEntregaNavigation.Provincia}" +
+                  (string.IsNullOrWhiteSpace(p.IdDireccionEntregaNavigation.Referencia)
+                      ? ""
+                      : $" ({p.IdDireccionEntregaNavigation.Referencia})"),
+            Lineas = p.DetallePedido.Select(d => new DetalleLineaColaDTO
+            {
+                Nombre = d.IdProductoNavigation?.Nombre ?? d.IdComboNavigation?.Nombre ?? "—",
+                Cantidad = d.Cantidad,
+                Observaciones = d.Observaciones
+            }).ToList()
+        };
 
         // Avanza el pedido al siguiente estado de SU secuencia (que depende del método
         // de entrega: recogida en tienda o domicilio). Usado por Cocina y, en general,

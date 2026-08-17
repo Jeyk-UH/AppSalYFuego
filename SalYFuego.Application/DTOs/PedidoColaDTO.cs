@@ -10,6 +10,9 @@ namespace Sal_Fuego.Aplication.DTOs
         public string ClienteNombre { get; set; } = null!;
         public int IdEstado { get; set; }
         public string EstadoNombre { get; set; } = null!;
+        public string MetodoEntrega { get; set; } = null!;
+        // Solo viene poblado si MetodoEntrega es "Entrega a domicilio" (lo necesita Repartidor)
+        public string? DireccionEntrega { get; set; }
         public List<DetalleLineaColaDTO> Lineas { get; set; } = new();
     }
 

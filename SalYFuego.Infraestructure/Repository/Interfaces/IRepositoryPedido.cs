@@ -37,6 +37,10 @@ namespace Sal_Fuego.Infraestructure.Repository.Interfaces
         // (FIFO): el que entró primero es el que se prepara primero. Usado por la cola de Cocina.
         Task<ICollection<Pedido>> ListarPorEstadosAsync(int[] idsEstado);
 
+        // Los "top" pedidos más recientes entre los estados indicados (fecha descendente).
+        // Usado para la columna "Finalizado" del tablero: solo los últimos N, no todo el historial.
+        Task<ICollection<Pedido>> ListarUltimosPorEstadosAsync(int[] idsEstado, int top);
+
         // Pedido "liviano" (sin includes), trackeado por EF, listo para cambiarle el estado
         Task<Pedido?> FindParaActualizarEstadoAsync(int id);
 
