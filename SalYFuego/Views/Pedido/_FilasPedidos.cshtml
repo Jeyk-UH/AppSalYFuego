@@ -1,0 +1,35 @@
+@model ICollection<Sal_Fuego.Aplication.DTOs.PedidoListaDTO>
+@{
+    bool esStaff = (bool)(ViewBag.EsStaff ?? false);
+}
+
+@if (!Model.Any())
+{
+    <tr>
+        <td colspan="@(esStaff ? 6 : 5)" class="text-center text-muted py-4">
+            No se encontraron pedidos.
+        </td>
+    </tr>
+}
+else
+{
+    @foreach (var pedido in Model)
+    {
+        <tr>
+            <td>@pedido.CodigoOrden</td>
+            <td>@pedido.FechaPedido.ToString("dd/MM/yyyy HH:mm")</td>
+            @if (esStaff)
+            {
+                <td>@pedido.ClienteNombre</td>
+            }
+            <td><span class="badge bg-dark">@pedido.EstadoNombre</span></td>
+            <td>₡@pedido.Total.ToString("N2")</td>
+            <td>
+                <a asp-controller="Pedido" asp-action="Detalle" asp-route-id="@pedido.IdPedido"
+                   class="btn btn-sm btn-outline-primary">
+                    Ver detalle
+                </a>
+            </td>
+        </tr>
+    }
+}

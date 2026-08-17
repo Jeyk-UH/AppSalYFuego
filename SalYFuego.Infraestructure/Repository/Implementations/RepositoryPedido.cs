@@ -46,5 +46,47 @@ namespace Sal_Fuego.Infraestructure.Repository.Implementations
             await _context.SaveChangesAsync();
             return pedido;
         }
+
+        // Historial del Cliente logueado
+        public async Task<ICollection<Pedido>> ListarPorClienteAsync(int idCliente)
+        {
+            return await _context.Set<Pedido>()
+                .Include(p => p.IdEstadoNavigation)
+                .Where(p => p.IdCliente == idCliente)
+                .OrderByDescending(p => p.FechaPedido)
+                .ToListAsync();
+        }
+
+        // Historial completo (Encargado/Administrador), con filtro opcional por fecha y estado
+        public async Task<ICollection<Pedido>> ListarTodosAsync(DateTime? fecha, int? idEstado)
+        {
+            var query = _context.Set<Pedido>()
+                .Include(p => p.IdClienteNavigation)
+                .Include(p => p.IdEstadoNavigation)
+                .AsQueryable();
+
+            if (fecha.HasValue)
+                query = query.Where(p => p.FechaPedido.Date == fecha.Value.Date);
+
+            if (idEstado.HasValue)
+                query = query.Where(p => p.IdEstado == idEstado.Value);
+
+            return await query
+                .OrderByDescending(p => p.FechaPedido)
+                .ToListAsync();
+        }
+
+        // Pedido completo para armar el detalle en formato de factura
+        public async Task<Pedido?> FindDetalleByIdAsync(int id)
+        {
+            return await _context.Set<Pedido>()
+                .Include(p => p.IdClienteNavigation)
+                .Include(p => p.IdEmpleadoNavigation)
+                .Include(p => p.IdEstadoNavigation)
+                .Include(p => p.DetallePedido).ThenInclude(d => d.IdProductoNavigation)
+                .Include(p => p.DetallePedido).ThenInclude(d => d.IdComboNavigation)
+                .Include(p => p.Pago).ThenInclude(pa => pa.IdMetodoPagoNavigation)
+                .FirstOrDefaultAsync(p => p.IdPedido == id);
+        }
     }
 }

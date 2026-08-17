@@ -71,6 +71,16 @@
                         </a>
                     </li>
                 }
+                @if (User.IsInRole(Roles.Cliente))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link px-3 py-2 rounded"
+                           style="color: #333; letter-spacing:1px; font-size:0.85rem;"
+                           asp-controller="Pedido" asp-action="Index">
+                            MIS PEDIDOS
+                        </a>
+                    </li>
+                }
 
                 @if (esAdmin)
                 {
@@ -116,6 +126,13 @@
                             USUARIOS
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 py-2 rounded"
+                           style="color: #333; letter-spacing:1px; font-size:0.85rem;"
+                           asp-controller="Pedido" asp-action="Index">
+                            PEDIDOS
+                        </a>
+                    </li>
                 }
                 @if (User.IsInRole(Roles.Encargado))
                 {
@@ -124,6 +141,13 @@
                            style="color: #333; letter-spacing:1px; font-size:0.85rem;"
                            asp-controller="Caja" asp-action="Index">
                             CAJA
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 py-2 rounded"
+                           style="color: #333; letter-spacing:1px; font-size:0.85rem;"
+                           asp-controller="Pedido" asp-action="Index">
+                            PEDIDOS
                         </a>
                     </li>
                 }

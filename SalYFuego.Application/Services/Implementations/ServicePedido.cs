@@ -172,5 +172,69 @@ namespace Sal_Fuego.Aplication.Services.Implementations
         {
             return $"ORD-{DateTime.Now:yyyyMMddHHmmss}{Random.Shared.Next(100, 999)}";
         }
+
+        // Historial del Cliente logueado
+        public async Task<ICollection<PedidoListaDTO>> ObtenerHistorialClienteAsync(int idCliente)
+        {
+            var pedidos = await _repository.ListarPorClienteAsync(idCliente);
+            return pedidos.Select(MapearALista).ToList();
+        }
+
+        // Historial completo (Encargado/Administrador), con filtro opcional por fecha y estado
+        public async Task<ICollection<PedidoListaDTO>> ObtenerHistorialTodosAsync(DateTime? fecha, int? idEstado)
+        {
+            var pedidos = await _repository.ListarTodosAsync(fecha, idEstado);
+            return pedidos.Select(MapearALista).ToList();
+        }
+
+        private static PedidoListaDTO MapearALista(Pedido p) => new()
+        {
+            IdPedido = p.IdPedido,
+            CodigoOrden = p.CodigoOrden,
+            FechaPedido = p.FechaPedido,
+            ClienteNombre = p.IdClienteNavigation?.NombreCompleto
+                ?? p.NombreClienteInvitado
+                ?? "Cliente Anónimo",
+            EstadoNombre = p.IdEstadoNavigation.Nombre,
+            Total = p.Total
+        };
+
+        // Detalle de un pedido en formato de factura, con el impuesto calculado por línea
+        public async Task<PedidoDetalleDTO?> ObtenerDetalleAsync(int idPedido)
+        {
+            var p = await _repository.FindDetalleByIdAsync(idPedido);
+            if (p == null) return null;
+
+            return new PedidoDetalleDTO
+            {
+                IdPedido = p.IdPedido,
+                IdCliente = p.IdCliente,
+                CodigoOrden = p.CodigoOrden,
+                FechaPedido = p.FechaPedido,
+                ClienteNombre = p.IdClienteNavigation?.NombreCompleto
+                    ?? p.NombreClienteInvitado
+                    ?? "Cliente Anónimo",
+                ClienteIdentificador = p.IdClienteNavigation?.Correo
+                    ?? p.CedulaClienteInvitado
+                    ?? "Sin cédula",
+                EncargadoNombre = p.IdEmpleadoNavigation?.NombreCompleto ?? "—",
+                MetodoEntrega = p.MetodoEntrega,
+                MetodoPagoNombre = p.Pago.FirstOrDefault()?.IdMetodoPagoNavigation?.Nombre ?? "—",
+                EstadoNombre = p.IdEstadoNavigation.Nombre,
+                Lineas = p.DetallePedido.Select(d => new DetalleLineaDTO
+                {
+                    Nombre = d.IdProductoNavigation?.Nombre ?? d.IdComboNavigation?.Nombre ?? "—",
+                    PrecioUnitario = d.PrecioUnitario,
+                    Cantidad = d.Cantidad,
+                    Subtotal = d.Subtotal,
+                    Impuesto = Math.Round(d.Subtotal * TasaImpuesto, 2),
+                    Observaciones = d.Observaciones
+                }).ToList(),
+                Subtotal = p.Subtotal,
+                Impuesto = p.Impuesto,
+                CostoEnvio = p.CostoEnvio,
+                Total = p.Total
+            };
+        }
     }
 }

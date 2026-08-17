@@ -21,5 +21,14 @@ namespace Sal_Fuego.Infraestructure.Repository.Interfaces
 
         // Inserta el pedido junto con sus DetallePedido y Pago (una sola transacción)
         Task<Pedido> CrearAsync(Pedido pedido);
+
+        // Historial del Cliente logueado, ordenado por fecha descendente
+        Task<ICollection<Pedido>> ListarPorClienteAsync(int idCliente);
+
+        // Historial completo para Encargado/Administrador, con filtro opcional por fecha y estado
+        Task<ICollection<Pedido>> ListarTodosAsync(DateTime? fecha, int? idEstado);
+
+        // Pedido completo (cliente, empleado, estado, líneas de detalle con producto/combo, pago) para el detalle tipo factura
+        Task<Pedido?> FindDetalleByIdAsync(int id);
     }
 }

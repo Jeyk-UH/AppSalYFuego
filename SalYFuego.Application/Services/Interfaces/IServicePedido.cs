@@ -14,5 +14,14 @@ namespace Sal_Fuego.Aplication.Services.Interfaces
         // Registra una venta hecha por Caja (o Administrador). Revalida precios
         // contra la base de datos, calcula impuesto/total y guarda Pedido+Detalle+Pago.
         Task<VentaResultadoDTO> CrearVentaAsync(VentaCrearDTO dto, int idEmpleado);
+
+        // Historial de pedidos del Cliente logueado
+        Task<ICollection<PedidoListaDTO>> ObtenerHistorialClienteAsync(int idCliente);
+
+        // Historial completo para Encargado/Administrador, con filtro opcional por fecha y estado
+        Task<ICollection<PedidoListaDTO>> ObtenerHistorialTodosAsync(DateTime? fecha, int? idEstado);
+
+        // Detalle de un pedido en formato de factura
+        Task<PedidoDetalleDTO?> ObtenerDetalleAsync(int idPedido);
     }
 }

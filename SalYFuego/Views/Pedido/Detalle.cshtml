@@ -1,0 +1,99 @@
+@model Sal_Fuego.Aplication.DTOs.PedidoDetalleDTO
+
+@{
+    ViewData["Title"] = $"Pedido {Model.CodigoOrden}";
+}
+
+<div class="container mt-4" style="max-width: 900px;">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <a asp-controller="Pedido" asp-action="Index" class="btn btn-outline-secondary">
+            Volver
+        </a>
+        <h1 class="mb-0">Pedido @Model.CodigoOrden</h1>
+    </div>
+
+    <!-- Encabezado -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="text-muted small text-uppercase">Fecha</div>
+                    <div>@Model.FechaPedido.ToString("dd/MM/yyyy HH:mm")</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small text-uppercase">Cliente</div>
+                    <div>@Model.ClienteNombre</div>
+                    <div class="small text-muted">@Model.ClienteIdentificador</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small text-uppercase">Encargado</div>
+                    <div>@Model.EncargadoNombre</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small text-uppercase">Método de entrega</div>
+                    <div>@Model.MetodoEntrega</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small text-uppercase">Método de pago</div>
+                    <div>@Model.MetodoPagoNombre</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small text-uppercase">Estado</div>
+                    <span class="badge bg-dark">@Model.EstadoNombre</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detalle -->
+    <table class="table table-bordered align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Producto / Combo</th>
+                <th>Precio</th>
+                <th>Cantidad</th>
+                <th>Subtotal</th>
+                <th>Impuesto</th>
+                <th>Observaciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var linea in Model.Lineas)
+            {
+                <tr>
+                    <td>@linea.Nombre</td>
+                    <td>₡@linea.PrecioUnitario.ToString("N2")</td>
+                    <td>@linea.Cantidad</td>
+                    <td>₡@linea.Subtotal.ToString("N2")</td>
+                    <td>₡@linea.Impuesto.ToString("N2")</td>
+                    <td>@(string.IsNullOrWhiteSpace(linea.Observaciones) ? "—" : linea.Observaciones)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- Totales -->
+    <div class="d-flex justify-content-end">
+        <div style="min-width: 300px;">
+            <div class="d-flex justify-content-between py-1">
+                <span>Total sin impuestos</span>
+                <span>₡@Model.Subtotal.ToString("N2")</span>
+            </div>
+            @if (Model.CostoEnvio > 0)
+            {
+                <div class="d-flex justify-content-between py-1">
+                    <span>Costo de envío</span>
+                    <span>₡@Model.CostoEnvio.ToString("N2")</span>
+                </div>
+            }
+            <div class="d-flex justify-content-between py-1">
+                <span>Impuesto</span>
+                <span>₡@Model.Impuesto.ToString("N2")</span>
+            </div>
+            <div class="d-flex justify-content-between py-2 fw-bold border-top mt-1">
+                <span>Total</span>
+                <span style="color:#f5a623;">₡@Model.Total.ToString("N2")</span>
+            </div>
+        </div>
+    </div>
+</div>

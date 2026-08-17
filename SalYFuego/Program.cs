@@ -31,6 +31,7 @@ builder.Services.AddScoped<IRepositoryUsuario, RepositoryUsuario>();
 builder.Services.AddScoped<IRepositoryRol, RepositoryRol>();
 builder.Services.AddScoped<IRepositoryPedido, RepositoryPedido>();
 builder.Services.AddScoped<IRepositoryMetodoPago, RepositoryMetodoPago>();
+builder.Services.AddScoped<IRepositoryEstadoPedido, RepositoryEstadoPedido>();
 
 // Registro de Servicios
 builder.Services.AddScoped<IServiceProducto, ServiceProducto>();
@@ -43,6 +44,7 @@ builder.Services.AddScoped<IServiceUsuario, ServiceUsuario>();
 builder.Services.AddScoped<IServiceRol, ServiceRol>();
 builder.Services.AddScoped<IServicePedido, ServicePedido>();
 builder.Services.AddScoped<IServiceMetodoPago, ServiceMetodoPago>();
+builder.Services.AddScoped<IServiceEstadoPedido, ServiceEstadoPedido>();
 
 // Registro de AutoMapper
 builder.Services.AddAutoMapper(cfg => {

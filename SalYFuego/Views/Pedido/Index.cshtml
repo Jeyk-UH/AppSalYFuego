@@ -1,0 +1,130 @@
+@model ICollection<Sal_Fuego.Aplication.DTOs.PedidoListaDTO>
+
+@{
+    ViewData["Title"] = "Historial de Pedidos";
+    bool esStaff = (bool)(ViewBag.EsStaff ?? false);
+
+    var estadosJson = esStaff
+        ? System.Text.Json.JsonSerializer.Serialize(
+            ((ICollection<Sal_Fuego.Aplication.DTOs.EstadoPedidoDTO>)ViewBag.Estados)
+                .Select(e => new { id = e.IdEstado, nombre = e.Nombre }))
+        : "[]";
+}
+
+<div class="container mt-4">
+    <h1 class="mb-3">Historial de Pedidos</h1>
+
+    @if (esStaff)
+    {
+        <div class="row g-2 mb-3">
+            <div class="col-md-3">
+                <label class="form-label small mb-1">Fecha</label>
+                <input type="date" id="filtroFecha" class="form-control"
+                       value="@ViewBag.FechaSeleccionada" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small mb-1">Estado</label>
+                <select id="filtroEstado" class="form-select">
+                    <option value="">-- Todos los estados --</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="button" id="btnLimpiarFiltros" class="btn btn-outline-secondary w-100">
+                    Limpiar filtros
+                </button>
+            </div>
+        </div>
+    }
+
+    <table class="table table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Código</th>
+                <th>Fecha</th>
+                @if (esStaff)
+                {
+                    <th>Cliente</th>
+                }
+                <th>Estado</th>
+                <th>Total</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="cuerpoTabla">
+            @await Html.PartialAsync("_FilasPedidos", Model)
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        const estados = @Html.Raw(estadosJson);
+        const esStaff = @Html.Raw(esStaff ? "true" : "false");
+
+        if (esStaff) {
+            const selectEstado = document.getElementById('filtroEstado');
+            estados.forEach(e => {
+                const option = document.createElement('option');
+                option.value = e.id;
+                option.textContent = e.nombre;
+                if (String(e.id) === '@ViewBag.EstadoSeleccionado') option.selected = true;
+                selectEstado.appendChild(option);
+            });
+
+            async function aplicarFiltros() {
+                const fecha = document.getElementById('filtroFecha').value;
+                const idEstado = document.getElementById('filtroEstado').value;
+
+                const params = new URLSearchParams();
+                if (fecha) params.append('fecha', fecha);
+                if (idEstado) params.append('idEstado', idEstado);
+
+                const res = await fetch(`/Pedido/Filtrar?${params.toString()}`);
+                const pedidos = await res.json();
+                renderFilas(pedidos);
+            }
+
+            function formatoFecha(iso) {
+                const d = new Date(iso);
+                return d.toLocaleDateString('es-CR') + ' ' +
+                    d.toLocaleTimeString('es-CR', { hour: '2-digit', minute: '2-digit' });
+            }
+
+            function renderFilas(pedidos) {
+                const cuerpo = document.getElementById('cuerpoTabla');
+
+                if (pedidos.length === 0) {
+                    cuerpo.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">No se encontraron pedidos.</td></tr>`;
+                    return;
+                }
+
+                cuerpo.innerHTML = pedidos.map(p => `
+                    <tr>
+                        <td>${p.codigoOrden}</td>
+                        <td>${formatoFecha(p.fechaPedido)}</td>
+                        <td class="nombre-cliente"></td>
+                        <td><span class="badge bg-dark">${p.estadoNombre}</span></td>
+                        <td>₡${p.total.toLocaleString('es-CR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td>
+                            <a href="/Pedido/Detalle/${p.idPedido}" class="btn btn-sm btn-outline-primary">
+                                Ver detalle
+                            </a>
+                        </td>
+                    </tr>
+                `).join('');
+
+                cuerpo.querySelectorAll('.nombre-cliente').forEach((td, idx) => {
+                    td.textContent = pedidos[idx].clienteNombre;
+                });
+            }
+
+            document.getElementById('filtroFecha').addEventListener('change', aplicarFiltros);
+            document.getElementById('filtroEstado').addEventListener('change', aplicarFiltros);
+            document.getElementById('btnLimpiarFiltros').addEventListener('click', () => {
+                document.getElementById('filtroFecha').value = '';
+                document.getElementById('filtroEstado').value = '';
+                aplicarFiltros();
+            });
+        }
+    </script>
+}
