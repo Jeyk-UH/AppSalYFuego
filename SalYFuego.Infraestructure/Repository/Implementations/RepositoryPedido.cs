@@ -129,6 +129,7 @@ namespace Sal_Fuego.Infraestructure.Repository.Implementations
                 .Include(p => p.DetallePedido).ThenInclude(d => d.IdProductoNavigation)
                 .Include(p => p.DetallePedido).ThenInclude(d => d.IdComboNavigation)
                 .Include(p => p.Pago).ThenInclude(pa => pa.IdMetodoPagoNavigation)
+                .Include(p => p.IdDireccionEntregaNavigation)
                 .FirstOrDefaultAsync(p => p.IdPedido == id);
         }
     }

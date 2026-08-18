@@ -7,9 +7,11 @@ using Sal_Fuego.Aplication.Services.Interfaces;
 
 namespace Sal_Fuego.Controllers
 {
-    // Historial y detalle de pedidos. Cliente ve solo lo suyo;
-    // Encargado y Administrador ven todos, con filtros por fecha y estado.
-    [Authorize(Roles = Roles.Cliente + "," + Roles.Encargado + "," + Roles.Administrador)]
+    // Historial y detalle de pedidos. Cliente ve solo lo suyo; Encargado y Administrador
+    // ven todos, con filtros por fecha y estado. Salonero y Repartidor pueden entrar al
+    // Detalle de cualquier pedido (por ejemplo, desde el link de sus propias colas) para
+    // ver la línea de tiempo y la dirección de entrega, pero sin controles de gestión.
+    [Authorize(Roles = Roles.Cliente + "," + Roles.Encargado + "," + Roles.Administrador + "," + Roles.Salonero + "," + Roles.Repartidor)]
     public class PedidoController : Controller
     {
         private readonly IServicePedido _servicePedido;
@@ -92,8 +94,10 @@ namespace Sal_Fuego.Controllers
             var detalle = await _servicePedido.ObtenerDetalleAsync(id);
             if (detalle == null) return NotFound();
 
-            // Un Cliente solo puede ver sus propios pedidos
-            if (!EsStaff() && detalle.IdCliente != ObtenerIdUsuarioActual())
+            // Un Cliente solo puede ver sus propios pedidos; el resto de los roles
+            // operativos (Encargado, Administrador, Salonero, Repartidor) puede ver
+            // el detalle de cualquier pedido.
+            if (!PuedeVerCualquierPedido() && detalle.IdCliente != ObtenerIdUsuarioActual())
                 return Forbid();
 
             if (EsStaff())
@@ -103,6 +107,15 @@ namespace Sal_Fuego.Controllers
                 ViewBag.MetodosPago = await _serviceMetodoPago.ListPresencialAsync();
             }
             ViewBag.EsStaff = EsStaff();
+
+            // El botón "Volver" debe llevar a la pantalla propia de cada rol, no
+            // siempre a Pedido/Index (que para Salonero/Repartidor no aplica).
+            if (User.IsInRole(Roles.Salonero))
+                ViewBag.VolverUrl = "/Salonero/Index";
+            else if (User.IsInRole(Roles.Repartidor))
+                ViewBag.VolverUrl = "/Repartidor/Index";
+            else
+                ViewBag.VolverUrl = "/Pedido/Index";
 
             return View(detalle);
         }
@@ -148,6 +161,12 @@ namespace Sal_Fuego.Controllers
 
         private bool EsStaff() =>
             User.IsInRole(Roles.Encargado) || User.IsInRole(Roles.Administrador);
+
+        // Puede ver el Detalle de cualquier pedido (no solo el suyo): además de
+        // Encargado/Administrador, también Salonero y Repartidor lo necesitan para
+        // ver la dirección de entrega y la línea de tiempo desde sus propias colas.
+        private bool PuedeVerCualquierPedido() =>
+            EsStaff() || User.IsInRole(Roles.Salonero) || User.IsInRole(Roles.Repartidor);
 
         private int ObtenerIdUsuarioActual() =>
             int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);

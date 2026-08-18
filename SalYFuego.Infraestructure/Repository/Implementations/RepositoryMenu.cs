@@ -87,23 +87,33 @@ namespace Sal_Fuego.Infraestructure.Repository.Implementations
         }
 
         // Actualizar menú existente
-        // Actualizar menú existente
         public async Task UpdateAsync(Menu menu)
         {
-            // Eliminar disponibilidades e items existentes antes de actualizar
-            var disponibilidades = await _context.Set<MenuDisponibilidad>()
-                .Where(d => d.IdMenu == menu.IdMenu)
-                .ToListAsync();
-            _context.Set<MenuDisponibilidad>().RemoveRange(disponibilidades);
+            // Se borra por SQL directo (no vía el grafo de EF): la FK IdMenu es
+            // obligatoria y está configurada como ClientSetNull, así que limpiar la
+            // colección de navegación (menu.MenuDisponibilidad.Clear()/MenuItem.Clear())
+            // NO marca esas filas para borrar — EF simplemente las desconecta del grafo
+            // y las deja intactas en la base de datos. Eso causaba que cada edición del
+            // menú fuera ACUMULANDO disponibilidad/ítems en vez de reemplazarlos.
+            await _context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM MENU_DISPONIBILIDAD WHERE IdMenu = {menu.IdMenu}");
+            await _context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM MENU_ITEM WHERE IdMenu = {menu.IdMenu}");
 
-            var items = await _context.Set<MenuItem>()
-                .Where(i => i.IdMenu == menu.IdMenu)
-                .ToListAsync();
-            _context.Set<MenuItem>().RemoveRange(items);
+            // Como el borrado fue por SQL directo, hay que desconectar cualquier
+            // instancia vieja que EF todavía tenga trackeada para ese IdMenu (las que
+            // vinieron del FindByIdAsync original), y así no intente volver a tocarlas.
+            foreach (var entry in _context.ChangeTracker.Entries<MenuDisponibilidad>()
+                         .Where(e => e.Entity.IdMenu == menu.IdMenu && e.State != EntityState.Added)
+                         .ToList())
+                entry.State = EntityState.Detached;
 
-            await _context.SaveChangesAsync();
+            foreach (var entry in _context.ChangeTracker.Entries<MenuItem>()
+                         .Where(e => e.Entity.IdMenu == menu.IdMenu && e.State != EntityState.Added)
+                         .ToList())
+                entry.State = EntityState.Detached;
 
-            // Ahora actualizar el menú con los nuevos datos
+            // Ahora sí: guardar el menú con su disponibilidad e ítems nuevos (Added).
             _context.Set<Menu>().Update(menu);
             await _context.SaveChangesAsync();
         }

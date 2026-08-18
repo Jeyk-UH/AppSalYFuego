@@ -1,7 +1,10 @@
 @model IPagedList<Sal_Fuego.Aplication.DTOs.ProductoDTO>
+@using Sal_Fuego.Aplication.Config
+@using System.Globalization
 
 @{
     ViewData["Title"] = "Catálogo de Productos";
+    bool esCliente = User.IsInRole(Roles.Cliente);
 }
 
 <div class="container mt-4">
@@ -23,6 +26,18 @@
                                 <span class="h5">₡@item.Precio.ToString("N2")</span>
                                 <a asp-action="Detalle" asp-route-id="@item.IdProducto" class="btn btn-outline-primary">Ver detalle</a>
                             </div>
+                            @if (esCliente)
+                            {
+                                <div class="d-flex align-items-center gap-2 mt-2"
+                                     data-carrito-tipo="Producto" data-carrito-id="@item.IdProducto"
+                                     data-carrito-nombre="@item.Nombre" data-carrito-precio="@item.Precio.ToString(CultureInfo.InvariantCulture)">
+                                    <input type="number" min="1" value="1" class="form-control form-control-sm input-cantidad-agregar" style="width:70px;">
+                                    <button type="button" class="btn btn-sm btn-agregar-carrito flex-grow-1"
+                                            style="background-color:#f5a623; color:#1a1a1a; font-weight:bold;">
+                                        Agregar
+                                    </button>
+                                </div>
+                            }
                         </div>
                     </div>
                 </div>

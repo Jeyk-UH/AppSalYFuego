@@ -101,6 +101,15 @@
         let activos = @Html.Raw(activosJson);
         let finalizados = @Html.Raw(finalizadosJson);
 
+        // Igual que en ServicePedido: después de "Preparado" la secuencia se bifurca
+        // según el método de entrega. No se debe ofrecer un estado de la rama
+        // contraria (dejaría al pedido sin secuencia válida para seguir avanzando).
+        const SECUENCIA_DOMICILIO = ['Pendiente de Pago', 'Pagado', 'En Preparación', 'Preparado', 'En Espera Repartidor', 'En Ruta', 'Entregado'];
+        const SECUENCIA_RECOGIDA = ['Pendiente de Pago', 'Pagado', 'En Preparación', 'Preparado', 'Listo para Retirar', 'Retirado'];
+        function secuenciaPara(metodoEntrega) {
+            return metodoEntrega === 'Entrega a domicilio' ? SECUENCIA_DOMICILIO : SECUENCIA_RECOGIDA;
+        }
+
         function formatoHora(iso) {
             const d = new Date(iso);
             return d.toLocaleDateString('es-CR') + ' ' + d.toLocaleTimeString('es-CR', { hour: '2-digit', minute: '2-digit' });
@@ -172,7 +181,8 @@
                 tarjeta.querySelector('.cliente-nombre').textContent = pedido.clienteNombre;
 
                 const select = tarjeta.querySelector('.select-nuevo-estado');
-                estadosDisponibles.forEach(e => {
+                const secuencia = secuenciaPara(pedido.metodoEntrega);
+                estadosDisponibles.filter(e => secuencia.includes(e.nombre)).forEach(e => {
                     const option = document.createElement('option');
                     option.value = e.id;
                     option.textContent = e.nombre;

@@ -9,9 +9,29 @@
 USE SalYFuegoDB;
 GO
 
+-- Idempotente: si el script ya se había corrido antes (incluso con datos viejos,
+-- p. ej. MetodoEntrega = 'Local' o estados fuera de secuencia por pruebas manuales),
+-- borra los 5 pedidos de prueba y sus filas relacionadas antes de re-insertarlos.
+DELETE FROM PAGO WHERE IdPedido IN (SELECT IdPedido FROM PEDIDO WHERE CodigoOrden LIKE 'ORD-SEED%');
+DELETE FROM HISTORIAL_ESTADO_PEDIDO WHERE IdPedido IN (SELECT IdPedido FROM PEDIDO WHERE CodigoOrden LIKE 'ORD-SEED%');
+DELETE FROM DETALLE_PEDIDO WHERE IdPedido IN (SELECT IdPedido FROM PEDIDO WHERE CodigoOrden LIKE 'ORD-SEED%');
+DELETE FROM PEDIDO WHERE CodigoOrden LIKE 'ORD-SEED%';
+DELETE FROM DIRECCION_USUARIO WHERE Alias = 'Entrega Prueba (Seed)';
+GO
+
 DECLARE @IdCliente INT = (SELECT IdUsuario FROM USUARIO WHERE Correo = 'cliente@salyfuego.com');
 DECLARE @IdAdmin INT = (SELECT IdUsuario FROM USUARIO WHERE Correo = 'admin@salyfuego.com');
 DECLARE @IdEncargado INT = (SELECT IdUsuario FROM USUARIO WHERE Correo = 'encargado@salyfuego.com');
+
+-- Direcciones de prueba para los dos pedidos a domicilio (Pedido 2 y 5), para que
+-- Repartidor tenga una dirección real que mostrar en su cola.
+INSERT INTO DIRECCION_USUARIO (IdUsuario, Alias, Provincia, Canton, Distrito, DireccionExacta, Referencia, EsPredeterminada)
+VALUES (@IdCliente, 'Entrega Prueba (Seed)', 'San José', 'Central', 'Carmen', '100m norte del parque central, casa portón negro', 'Frente a la panadería', 0);
+DECLARE @Direccion2 INT = SCOPE_IDENTITY();
+
+INSERT INTO DIRECCION_USUARIO (IdUsuario, Alias, Provincia, Canton, Distrito, DireccionExacta, Referencia, EsPredeterminada)
+VALUES (@IdCliente, 'Entrega Prueba (Seed)', 'San José', 'Montes de Oca', 'San Pedro', 'Del Mall San Pedro, 200m este, edificio azul, tercer piso', 'Oficina 3B', 0);
+DECLARE @Direccion5 INT = SCOPE_IDENTITY();
 
 /* ------------------------------------------------------------------
    Pedido 1: Cliente registrado, Recogida en tienda, Retirado (10),
@@ -32,13 +52,14 @@ INSERT INTO PAGO (MontoPagado, Vuelto, TipoTarjeta, UltimosDigitos, FechaPago, I
 VALUES (6000.00, 237.00, NULL, NULL, DATEADD(DAY, -5, GETDATE()), @Pedido1, 1);
 
 /* ------------------------------------------------------------------
-   Pedido 2: Cliente registrado, Entrega a domicilio, En Preparación (3),
-   hoy, pago con tarjeta de crédito (cobro simulado en línea)
+   Pedido 2: Cliente registrado, Entrega a domicilio, En Espera Repartidor (5),
+   hoy, pago con tarjeta de crédito (cobro simulado en línea) — listo para
+   probar la cola de Repartidor ("Para recoger")
 ------------------------------------------------------------------ */
 INSERT INTO PEDIDO (CodigoOrden, FechaPedido, OrigenPedido, MetodoEntrega, Subtotal, Impuesto, CostoEnvio, Total,
-                     IdEstado, IdEstacionActual, IdCliente, IdEmpleado)
+                     IdEstado, IdEstacionActual, IdCliente, IdEmpleado, IdDireccionEntrega)
 VALUES ('ORD-SEED0002', GETDATE(), 'Cliente', 'Entrega a domicilio', 4500.00, 585.00, 1500.00, 6585.00,
-        3, 2, @IdCliente, NULL);
+        5, 2, @IdCliente, NULL, @Direccion2);
 
 DECLARE @Pedido2 INT = SCOPE_IDENTITY();
 
@@ -82,13 +103,14 @@ INSERT INTO PAGO (MontoPagado, Vuelto, TipoTarjeta, UltimosDigitos, FechaPago, I
 VALUES (4520.00, 0.00, 'Débito', '3021', DATEADD(DAY, -2, GETDATE()), @Pedido4, 3);
 
 /* ------------------------------------------------------------------
-   Pedido 5: Cliente registrado, Entrega a domicilio, Entregado (9),
-   hace 3 días, tarjeta de débito
+   Pedido 5: Cliente registrado, Entrega a domicilio, En Ruta (6),
+   hace 3 días, tarjeta de débito — listo para probar la cola de
+   Repartidor ("En ruta" → "Marcar entregado")
 ------------------------------------------------------------------ */
 INSERT INTO PEDIDO (CodigoOrden, FechaPedido, OrigenPedido, MetodoEntrega, Subtotal, Impuesto, CostoEnvio, Total,
-                     IdEstado, IdEstacionActual, IdCliente, IdEmpleado)
+                     IdEstado, IdEstacionActual, IdCliente, IdEmpleado, IdDireccionEntrega)
 VALUES ('ORD-SEED0005', DATEADD(DAY, -3, GETDATE()), 'Cliente', 'Entrega a domicilio', 7500.00, 975.00, 1500.00, 9975.00,
-        9, 2, @IdCliente, NULL);
+        6, 2, @IdCliente, NULL, @Direccion5);
 
 DECLARE @Pedido5 INT = SCOPE_IDENTITY();
 

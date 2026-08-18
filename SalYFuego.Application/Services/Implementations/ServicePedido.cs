@@ -101,7 +101,9 @@ namespace Sal_Fuego.Aplication.Services.Implementations
             if (menuDisponible == null)
                 return new List<MenuItemDTO>();
 
-            return menuDisponible.Items;
+            // Igual que Producto/Combo: un renglón puede seguir en el menú aunque el
+            // producto o combo subyacente ya se haya dado de baja (Activo = false).
+            return menuDisponible.Items.Where(i => i.Activo).ToList();
         }
 
         // Registra la venta: revalida cada ítem contra la base de datos (nunca confía en el
@@ -445,6 +447,7 @@ namespace Sal_Fuego.Aplication.Services.Implementations
                     ?? "Sin cédula",
                 EncargadoNombre = p.IdEmpleadoNavigation?.NombreCompleto ?? "—",
                 MetodoEntrega = p.MetodoEntrega,
+                DireccionEntrega = FormatearDireccion(p.IdDireccionEntregaNavigation),
                 MetodoPagoNombre = p.Pago.FirstOrDefault()?.IdMetodoPagoNavigation?.Nombre ?? "—",
                 EstadoNombre = p.IdEstadoNavigation.Nombre,
                 Lineas = p.DetallePedido.Select(d => new DetalleLineaDTO
@@ -496,6 +499,15 @@ namespace Sal_Fuego.Aplication.Services.Implementations
             return pedidos.Select(MapearACola).ToList();
         }
 
+        // Formatea la dirección de entrega para mostrarla en una sola línea (cola y
+        // detalle de factura la usan igual). Null si el pedido no es a domicilio.
+        private static string? FormatearDireccion(DireccionUsuario? direccion)
+        {
+            if (direccion == null) return null;
+            var texto = $"{direccion.DireccionExacta}, {direccion.Distrito}, {direccion.Canton}, {direccion.Provincia}";
+            return string.IsNullOrWhiteSpace(direccion.Referencia) ? texto : $"{texto} ({direccion.Referencia})";
+        }
+
         private static PedidoColaDTO MapearACola(Pedido p) => new()
         {
             IdPedido = p.IdPedido,
@@ -507,13 +519,7 @@ namespace Sal_Fuego.Aplication.Services.Implementations
             IdEstado = p.IdEstado,
             EstadoNombre = p.IdEstadoNavigation.Nombre,
             MetodoEntrega = p.MetodoEntrega,
-            DireccionEntrega = p.IdDireccionEntregaNavigation == null
-                ? null
-                : $"{p.IdDireccionEntregaNavigation.DireccionExacta}, {p.IdDireccionEntregaNavigation.Distrito}, " +
-                  $"{p.IdDireccionEntregaNavigation.Canton}, {p.IdDireccionEntregaNavigation.Provincia}" +
-                  (string.IsNullOrWhiteSpace(p.IdDireccionEntregaNavigation.Referencia)
-                      ? ""
-                      : $" ({p.IdDireccionEntregaNavigation.Referencia})"),
+            DireccionEntrega = FormatearDireccion(p.IdDireccionEntregaNavigation),
             Lineas = p.DetallePedido.Select(d => new DetalleLineaColaDTO
             {
                 Nombre = d.IdProductoNavigation?.Nombre ?? d.IdComboNavigation?.Nombre ?? "—",
@@ -552,6 +558,14 @@ namespace Sal_Fuego.Aplication.Services.Implementations
             var pedido = await _repository.FindParaActualizarEstadoAsync(idPedido);
             if (pedido == null)
                 throw new InvalidOperationException("El pedido no existe.");
+
+            // No se permite forzar un estado de la rama contraria (p. ej. "En Espera
+            // Repartidor" en un pedido de Recogida en tienda): eso deja al pedido sin
+            // secuencia válida y AvanzarEstadoAsync ya no puede seguir avanzándolo.
+            var secuenciaValida = ObtenerSecuenciaCompleta(pedido.MetodoEntrega);
+            if (!secuenciaValida.Contains(idEstadoNuevo))
+                throw new InvalidOperationException(
+                    $"Ese estado no aplica para un pedido con método de entrega \"{pedido.MetodoEntrega}\".");
 
             await AplicarNuevoEstadoAsync(pedido, idEstadoNuevo, idUsuario);
         }

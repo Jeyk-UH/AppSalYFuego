@@ -79,12 +79,13 @@ namespace Sal_Fuego.Aplication.Services.Implementations
             // Agregar disponibilidad
             AgregarDisponibilidad(menu, dto);
 
-            // Agregar productos al menú
-            foreach (var idProducto in dto.ProductosSeleccionados)
+            // Agregar productos al menú (Distinct por si el formulario envía el mismo
+            // id repetido, para no crear renglones de MENU_ITEM duplicados)
+            foreach (var idProducto in dto.ProductosSeleccionados.Distinct())
                 menu.MenuItem.Add(new MenuItem { IdProducto = idProducto });
 
             // Agregar combos al menú
-            foreach (var idCombo in dto.CombosSeleccionados)
+            foreach (var idCombo in dto.CombosSeleccionados.Distinct())
                 menu.MenuItem.Add(new MenuItem { IdCombo = idCombo });
 
             await _repository.AddAsync(menu);
@@ -107,14 +108,14 @@ namespace Sal_Fuego.Aplication.Services.Implementations
 
             // Limpiar y actualizar items
             menu.MenuItem.Clear();
-            foreach (var idProducto in dto.ProductosSeleccionados)
+            foreach (var idProducto in dto.ProductosSeleccionados.Distinct())
                 menu.MenuItem.Add(new MenuItem
                 {
                     IdMenu = menu.IdMenu,
                     IdProducto = idProducto
                 });
 
-            foreach (var idCombo in dto.CombosSeleccionados)
+            foreach (var idCombo in dto.CombosSeleccionados.Distinct())
                 menu.MenuItem.Add(new MenuItem
                 {
                     IdMenu = menu.IdMenu,
@@ -137,7 +138,7 @@ namespace Sal_Fuego.Aplication.Services.Implementations
         {
             if (dto.TipoDisponibilidad == "dias")
             {
-                foreach (var dia in dto.DiasSeleccionados)
+                foreach (var dia in dto.DiasSeleccionados.Distinct())
                     menu.MenuDisponibilidad.Add(new MenuDisponibilidad
                     {
                         DiaSemana = dia,

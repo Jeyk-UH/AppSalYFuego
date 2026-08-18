@@ -34,6 +34,10 @@ namespace Sal_Fuego.Aplication.Profiles
                         : src.IdComboNavigation.IdCategoriaNavigation.Nombre))
                 .ForMember(dest => dest.Tipo, opt => opt.MapFrom(src =>
                     src.IdProductoNavigation != null ? "Producto" : "Combo"))
+                .ForMember(dest => dest.Activo, opt => opt.MapFrom(src =>
+                    src.IdProductoNavigation != null
+                        ? src.IdProductoNavigation.Activo
+                        : src.IdComboNavigation.Activo))
                 .ReverseMap();
 
             // Mapeo de Menu a MenuDTO

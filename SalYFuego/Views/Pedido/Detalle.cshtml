@@ -6,9 +6,20 @@
     bool esStaff = (bool)(ViewBag.EsStaff ?? false);
     var csrfToken = Xsrf.GetAndStoreTokens(Context).RequestToken;
 
+    // Secuencia de estados según el método de entrega (después de "Preparado" se
+    // bifurca entre recogida y domicilio). Se usa tanto para la línea de tiempo
+    // como para limitar el selector "Cambiar estado" a lo que aplica a este pedido:
+    // forzar un estado de la rama contraria deja al pedido sin secuencia válida.
+    bool esDomicilio = Model.MetodoEntrega == "Entrega a domicilio";
+    string[] secuenciaEstados = esDomicilio
+        ? new[] { "Pendiente de Pago", "Pagado", "En Preparación", "Preparado", "En Espera Repartidor", "En Ruta", "Entregado" }
+        : new[] { "Pendiente de Pago", "Pagado", "En Preparación", "Preparado", "Listo para Retirar", "Retirado" };
+    int indiceActualEstado = Array.IndexOf(secuenciaEstados, Model.EstadoNombre);
+
     var estadosJson = esStaff
         ? System.Text.Json.JsonSerializer.Serialize(
             ((ICollection<Sal_Fuego.Aplication.DTOs.EstadoPedidoDTO>)ViewBag.Estados)
+                .Where(e => secuenciaEstados.Contains(e.Nombre))
                 .Select(e => new { id = e.IdEstado, nombre = e.Nombre }))
         : "[]";
 
@@ -18,19 +29,11 @@
             ((ICollection<Sal_Fuego.Aplication.DTOs.MetodoPagoDTO>)ViewBag.MetodosPago)
                 .Select(m => new { id = m.IdMetodoPago, nombre = m.Nombre }))
         : "[]";
-
-    // Línea de tiempo: la secuencia de estados depende del método de entrega
-    // (después de "Preparado" se bifurca entre recogida y domicilio).
-    bool esDomicilio = Model.MetodoEntrega == "Entrega a domicilio";
-    string[] secuenciaEstados = esDomicilio
-        ? new[] { "Pendiente de Pago", "Pagado", "En Preparación", "Preparado", "En Espera Repartidor", "En Ruta", "Entregado" }
-        : new[] { "Pendiente de Pago", "Pagado", "En Preparación", "Preparado", "Listo para Retirar", "Retirado" };
-    int indiceActualEstado = Array.IndexOf(secuenciaEstados, Model.EstadoNombre);
 }
 
 <div class="container mt-4" style="max-width: 900px;">
     <div class="d-flex align-items-center gap-2 mb-3">
-        <a asp-controller="Pedido" asp-action="Index" class="btn btn-outline-secondary">
+        <a href="@ViewBag.VolverUrl" class="btn btn-outline-secondary">
             Volver
         </a>
         <h1 class="mb-0">Pedido @Model.CodigoOrden</h1>
@@ -90,6 +93,13 @@
                     <div class="text-muted small text-uppercase">Método de entrega</div>
                     <div>@Model.MetodoEntrega</div>
                 </div>
+                @if (esDomicilio && !string.IsNullOrWhiteSpace(Model.DireccionEntrega))
+                {
+                    <div class="col-md-8">
+                        <div class="text-muted small text-uppercase">Dirección de entrega</div>
+                        <div>@Model.DireccionEntrega</div>
+                    </div>
+                }
                 <div class="col-md-4">
                     <div class="text-muted small text-uppercase">Método de pago</div>
                     <div>@Model.MetodoPagoNombre</div>

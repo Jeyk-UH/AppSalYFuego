@@ -38,8 +38,10 @@
                         {
                             <span class="badge bg-info text-dark">
                                 @string.Join(", ", item.Disponibilidad
-                                    .Where(d => d.DiaSemana != null)
-                                    .Select(d => d.DiaSemana))
+                            .Where(d => d.DiaSemana != null)
+                                .Select(d => d.DiaSemana)
+                                 .Distinct())
+
                             </span>
                         }
                         else

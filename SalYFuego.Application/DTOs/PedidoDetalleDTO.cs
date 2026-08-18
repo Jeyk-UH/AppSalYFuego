@@ -15,6 +15,8 @@ namespace Sal_Fuego.Aplication.DTOs
         public string ClienteIdentificador { get; set; } = null!; // correo o cédula, según el caso
         public string EncargadoNombre { get; set; } = null!;
         public string MetodoEntrega { get; set; } = null!;
+        // Solo tiene valor cuando MetodoEntrega es "Entrega a domicilio"
+        public string? DireccionEntrega { get; set; }
         public string MetodoPagoNombre { get; set; } = null!;
         public string EstadoNombre { get; set; } = null!;
 

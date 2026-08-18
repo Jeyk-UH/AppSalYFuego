@@ -1,7 +1,10 @@
 ﻿@model Sal_Fuego.Aplication.DTOs.MenuDTO
+@using Sal_Fuego.Aplication.Config
+@using System.Globalization
 
 @{
     ViewData["Title"] = "Menú Disponible";
+    bool esCliente = User.IsInRole(Roles.Cliente);
 }
 
 <div class="container mt-4">
@@ -51,7 +54,7 @@
                 @foreach (var item in categoria)
                 {
                     <div class="col-md-4 mb-3">
-                        <div class="card h-100 border-0 shadow-sm">
+                        <div class="card h-100 border-0 shadow-sm product-card">
                             @if (!string.IsNullOrEmpty(item.ImagenUrl))
                             {
                                 <img src="@item.ImagenUrl"
@@ -65,6 +68,18 @@
                                     @item.Tipo
                                 </span>
                                 <p class="text-success fw-bold">₡@item.Precio</p>
+                                @if (esCliente)
+                                {
+                                    <div class="d-flex align-items-center gap-2"
+                                         data-carrito-tipo="@item.Tipo" data-carrito-id="@(item.Tipo == "Producto" ? item.IdProducto : item.IdCombo)"
+                                         data-carrito-nombre="@item.Nombre" data-carrito-precio="@item.Precio.ToString(CultureInfo.InvariantCulture)">
+                                        <input type="number" min="1" value="1" class="form-control form-control-sm input-cantidad-agregar" style="width:70px;">
+                                        <button type="button" class="btn btn-sm btn-agregar-carrito flex-grow-1"
+                                                style="background-color:#f5a623; color:#1a1a1a; font-weight:bold;">
+                                            Agregar
+                                        </button>
+                                    </div>
+                                }
                             </div>
                         </div>
                     </div>

@@ -13,5 +13,8 @@
         // útil para filtrar catálogos por lo que está en el menú disponible
         public int? IdProducto { get; set; }
         public int? IdCombo { get; set; }
+        // Activo del producto/combo subyacente (no del renglón de menú): un producto
+        // puede seguir vinculado a un menú viejo aunque ya se haya dado de baja.
+        public bool Activo { get; set; }
     }
 }

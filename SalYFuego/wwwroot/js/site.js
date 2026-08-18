@@ -62,3 +62,56 @@ function actualizarBadgeCarrito() {
 }
 
 actualizarBadgeCarrito();
+
+// ---------- Agregar al carrito desde el catálogo público (Producto/Combo/Menú del día) ----------
+// Usa el mismo formato de línea que arma Carrito/Index.cshtml, para que al entrar
+// al carrito los ítems agregados desde estas páginas ya aparezcan ahí.
+// Marcado esperado en la vista:
+//   <div data-carrito-tipo="Producto|Combo" data-carrito-id="1" data-carrito-nombre="..." data-carrito-precio="1000.00">
+//       <input class="input-cantidad-agregar" type="number" min="1" value="1">
+//       <button class="btn-agregar-carrito">Agregar</button>
+//   </div>
+function agregarAlCarritoPublico(tipo, id, nombre, precio, cantidad) {
+    cantidad = parseInt(cantidad, 10);
+    if (!cantidad || cantidad < 1) cantidad = 1;
+
+    const carrito = obtenerCarritoStorage();
+    const existente = carrito.find(i => i.tipo === tipo && i.id === id);
+    if (existente) {
+        existente.cantidad += cantidad;
+    } else {
+        carrito.push({ tipo, id, nombre, precio, cantidad, observaciones: '' });
+    }
+    guardarCarritoStorage(carrito);
+
+    if (window.Swal) {
+        Swal.fire({
+            icon: 'success',
+            title: 'Agregado al carrito',
+            text: `${nombre} (x${cantidad})`,
+            toast: true,
+            position: 'top-end',
+            timer: 1400,
+            showConfirmButton: false
+        });
+    }
+}
+
+document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.btn-agregar-carrito');
+    if (!btn) return;
+
+    const widget = btn.closest('[data-carrito-tipo]');
+    if (!widget) return;
+
+    const tipo = widget.dataset.carritoTipo;
+    const id = parseInt(widget.dataset.carritoId, 10);
+    const nombre = widget.dataset.carritoNombre;
+    const precio = parseFloat(widget.dataset.carritoPrecio);
+    const input = widget.querySelector('.input-cantidad-agregar');
+    const cantidad = input ? (parseInt(input.value, 10) || 1) : 1;
+
+    agregarAlCarritoPublico(tipo, id, nombre, precio, cantidad);
+
+    if (input) input.value = 1;
+});

@@ -1,7 +1,10 @@
 ﻿@model Sal_Fuego.Aplication.DTOs.ComboDTO
+@using Sal_Fuego.Aplication.Config
+@using System.Globalization
 
 @{
     ViewData["Title"] = Model.Nombre;
+    bool esCliente = User.IsInRole(Roles.Cliente);
 }
 
 <div class="container mt-4">
@@ -20,6 +23,19 @@
             <p class="text-muted">@Model.CategoriaNombre</p>
             <p>@Model.Descripcion</p>
             <h4 class="text-success">₡@Model.PrecioEspecial</h4>
+
+            @if (esCliente)
+            {
+                <div class="d-flex align-items-center gap-2 mb-3"
+                     data-carrito-tipo="Combo" data-carrito-id="@Model.IdCombo"
+                     data-carrito-nombre="@Model.Nombre" data-carrito-precio="@Model.PrecioEspecial.ToString(CultureInfo.InvariantCulture)">
+                    <input type="number" min="1" value="1" class="form-control input-cantidad-agregar" style="width:90px;">
+                    <button type="button" class="btn btn-agregar-carrito flex-grow-1"
+                            style="background-color:#f5a623; color:#1a1a1a; font-weight:bold;">
+                        Agregar al carrito
+                    </button>
+                </div>
+            }
 
             <hr />
             <h5>Productos incluidos:</h5>

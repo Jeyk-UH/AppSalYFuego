@@ -80,14 +80,44 @@
         color: #1a1a1a;
         font-weight: bold;
     }
+
+    /* Pestañas Catálogo / Mi pedido, solo en móvil (ver d-lg-none) */
+    .tab-movil {
+        border: 1px solid #f5a623;
+        background-color: #fff;
+        color: #1a1a1a;
+        font-weight: 600;
+    }
+
+    .tab-movil.active {
+        background-color: #f5a623;
+        color: #1a1a1a;
+    }
+
+    .tab-movil .badge {
+        color: #fff;
+    }
+
+    .tab-movil.active .badge {
+        background-color: #1a1a1a !important;
+    }
 </style>
 
 <div class="container-fluid mt-4">
     <h1 class="mb-3">Mi Carrito</h1>
 
+    <!-- Pestañas Catálogo / Mi pedido: solo en móvil, para no obligar a hacer
+         scroll por todo el catálogo antes de llegar al resumen del pedido. -->
+    <div id="tabsMovil" class="d-lg-none d-flex gap-2 mb-3">
+        <button type="button" id="btnTabCatalogo" class="btn flex-fill tab-movil active">Catálogo</button>
+        <button type="button" id="btnTabPedido" class="btn flex-fill tab-movil">
+            Mi pedido <span id="badgeTabPedido" class="badge rounded-pill" style="background:#6c757d;">0</span>
+        </button>
+    </div>
+
     <div class="row g-3">
         <!-- Catálogo -->
-        <div class="col-lg-8">
+        <div class="col-lg-8" id="colCatalogo">
             <input type="text" id="inputBuscarProducto" class="form-control mb-3"
                    placeholder="Buscar producto o combo...">
 
@@ -103,7 +133,7 @@
         </div>
 
         <!-- Carrito / Confirmación -->
-        <div class="col-lg-4">
+        <div class="col-lg-4" id="colPedido">
             <div class="card shadow-sm" style="position: sticky; top: 1rem;">
                 <div class="card-body">
                     <h5 class="mb-1">Mi pedido</h5>
@@ -202,6 +232,50 @@
         let carrito = obtenerCarritoStorage();
         let categoriaActiva = null; // null = todas
 
+        // ---------- Móvil: pestañas Catálogo / Mi pedido ----------
+        // En pantallas chicas no tiene sentido obligar a hacer scroll por todo el
+        // catálogo antes de llegar al resumen del pedido: se navega con pestañas y,
+        // dentro del catálogo, la grilla no se muestra hasta elegir una categoría
+        // (o buscar algo). En desktop (≥992px, breakpoint lg de Bootstrap) esto no
+        // aplica: se ve todo de una vez, como siempre.
+        function esMovil() {
+            return window.innerWidth < 992;
+        }
+
+        let tabActiva = 'catalogo'; // 'catalogo' | 'pedido'
+        let catalogoRevelado = !esMovil();
+
+        function aplicarLayoutMovil() {
+            const colCatalogo = document.getElementById('colCatalogo');
+            const colPedido = document.getElementById('colPedido');
+            if (!colCatalogo || !colPedido) return;
+
+            if (esMovil()) {
+                colCatalogo.style.display = tabActiva === 'catalogo' ? '' : 'none';
+                colPedido.style.display = tabActiva === 'pedido' ? '' : 'none';
+            } else {
+                colCatalogo.style.display = '';
+                colPedido.style.display = '';
+            }
+        }
+
+        function cambiarTabMovil(tab) {
+            tabActiva = tab;
+            document.getElementById('btnTabCatalogo').classList.toggle('active', tab === 'catalogo');
+            document.getElementById('btnTabPedido').classList.toggle('active', tab === 'pedido');
+            aplicarLayoutMovil();
+        }
+
+        document.getElementById('btnTabCatalogo').addEventListener('click', () => cambiarTabMovil('catalogo'));
+        document.getElementById('btnTabPedido').addEventListener('click', () => cambiarTabMovil('pedido'));
+        window.addEventListener('resize', aplicarLayoutMovil);
+
+        function actualizarBadgeTabPedido() {
+            const badge = document.getElementById('badgeTabPedido');
+            if (!badge) return;
+            badge.textContent = carrito.reduce((acc, i) => acc + i.cantidad, 0);
+        }
+
         // ---------- Categorías ----------
         function renderCategorias() {
             const cont = document.getElementById('categoriasFiltro');
@@ -221,6 +295,7 @@
 
                 btn.addEventListener('click', () => {
                     categoriaActiva = btn.dataset.cat || null;
+                    catalogoRevelado = true;
                     cont.querySelectorAll('.btn-categoria').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     renderCatalogo();
@@ -232,6 +307,11 @@
         function renderCatalogo() {
             const cont = document.getElementById('catalogoGrid');
             if (!cont) return;
+
+            if (esMovil() && !catalogoRevelado) {
+                cont.innerHTML = '<p class="text-muted text-center my-4">Elegí una categoría arriba (o buscá un producto) para ver el catálogo.</p>';
+                return;
+            }
 
             const inputBusqueda = document.getElementById('inputBuscarProducto');
             const term = (inputBusqueda?.value || '').toLowerCase();
@@ -273,6 +353,7 @@
         const inputBuscarProducto = document.getElementById('inputBuscarProducto');
         if (inputBuscarProducto) {
             inputBuscarProducto.addEventListener('input', function () {
+                if (this.value.trim()) catalogoRevelado = true;
                 renderCatalogo();
             });
         }
@@ -286,6 +367,18 @@
                 carrito.push({ tipo: item.tipo, id: item.id, nombre: item.nombre, precio: item.precio, cantidad: 1, observaciones: '' });
             }
             renderCarrito();
+
+            // En móvil "Mi pedido" queda oculto mientras se navega el catálogo:
+            // este aviso confirma que se agregó sin tener que cambiar de pestaña.
+            Swal.fire({
+                icon: 'success',
+                title: 'Agregado a tu pedido',
+                text: item.nombre,
+                toast: true,
+                position: 'top-end',
+                timer: 1200,
+                showConfirmButton: false
+            });
 
             const inputBusqueda = document.getElementById('inputBuscarProducto');
             if (inputBusqueda && inputBusqueda.value) {
@@ -349,6 +442,7 @@
 
         function renderCarrito() {
             const cont = document.getElementById('carritoItems');
+            actualizarBadgeTabPedido();
 
             if (carrito.length === 0) {
                 cont.innerHTML = '<p class="text-muted text-center my-3 small">El carrito está vacío.</p>';
@@ -579,6 +673,7 @@
         }
 
         // Inicialización
+        aplicarLayoutMovil();
         renderCategorias();
         renderCatalogo();
         renderCarrito();

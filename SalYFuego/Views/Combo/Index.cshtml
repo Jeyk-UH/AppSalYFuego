@@ -1,7 +1,10 @@
 ﻿@model IPagedList<Sal_Fuego.Aplication.DTOs.ComboDTO>
+@using Sal_Fuego.Aplication.Config
+@using System.Globalization
 
 @{
     ViewData["Title"] = "Catálogo de Combos";
+    bool esCliente = User.IsInRole(Roles.Cliente);
 }
 
 <div class="container mt-4">
@@ -14,7 +17,7 @@
             @foreach (var item in Model)
             {
                 <div class="col-md-3 mb-4">
-                    <div class="card h-100">
+                    <div class="card h-100 product-card">
                         <img src="@item.UrlImagen"
                              class="card-img-top"
                              alt="@item.Nombre"
@@ -31,6 +34,18 @@
                                     Ver detalle
                                 </a>
                             </div>
+                            @if (esCliente)
+                            {
+                                <div class="d-flex align-items-center gap-2 mt-2"
+                                     data-carrito-tipo="Combo" data-carrito-id="@item.IdCombo"
+                                     data-carrito-nombre="@item.Nombre" data-carrito-precio="@item.PrecioEspecial.ToString(CultureInfo.InvariantCulture)">
+                                    <input type="number" min="1" value="1" class="form-control form-control-sm input-cantidad-agregar" style="width:70px;">
+                                    <button type="button" class="btn btn-sm btn-agregar-carrito flex-grow-1"
+                                            style="background-color:#f5a623; color:#1a1a1a; font-weight:bold;">
+                                        Agregar
+                                    </button>
+                                </div>
+                            }
                         </div>
                     </div>
                 </div>
