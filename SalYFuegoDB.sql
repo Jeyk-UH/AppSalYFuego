@@ -1,11 +1,4 @@
-/* ============================================================================================
-   SAL Y FUEGO — SCRIPT MAESTRO DEFINITIVO
-   Incluye: Creación de BD, Tablas, y todos los datos de prueba
-   Orden: Tablas → Catálogos → Ingredientes → Productos → Imágenes → Combos → Menús → Procesos
-============================================================================================ */
 
-/* ============================
-   PASO 1: CREACIÓN DE BASE DE DATOS
 ============================ */
 IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'SalYFuegoDB')
     CREATE DATABASE SalYFuegoDB;
@@ -15,8 +8,7 @@ USE SalYFuegoDB;
 GO
 
 /* ============================
-   PASO 2: CREACIÓN DE TABLAS
-   (en orden según dependencias de FK)
+  CREACIÓN DE TABLAS
 ============================ */
 
 -- ROL
@@ -304,7 +296,7 @@ CREATE TABLE PAGO (
 GO
 
 /* ============================
-   PASO 3: ROLES
+    ROLES
 ============================ */
 SET IDENTITY_INSERT ROL ON;
 INSERT INTO ROL (IdRol, NombreRol) VALUES
@@ -318,11 +310,6 @@ SET IDENTITY_INSERT ROL OFF;
 GO
 
 /* ============================
-   PASO 3B: USUARIOS DE PRUEBA (uno por rol)
-   Las contraseñas ya vienen encriptadas con el algoritmo AES de
-   Cryptography.Encrypt, usando el secreto configurado en
-   SalYFuego/appsettings.Development.json -> Crypto:Secret.
-   Si ese secreto cambia, hay que recalcular estos hashes.
 
    Credenciales de prueba:
    admin@salyfuego.com       / Admin123*
@@ -342,7 +329,7 @@ INSERT INTO USUARIO (NombreCompleto, Correo, ContrasenaHash, Activo, IdRol) VALU
 GO
 
 /* ============================
-   PASO 4: CATEGORÍAS
+   CATEGORÍAS
 ============================ */
 SET IDENTITY_INSERT CATEGORIA ON;
 INSERT INTO CATEGORIA (IdCategoria, Nombre) VALUES
@@ -363,7 +350,7 @@ SET IDENTITY_INSERT CATEGORIA OFF;
 GO
 
 /* ============================
-   PASO 5: ESTACIONES
+  ESTACIONES
 ============================ */
 SET IDENTITY_INSERT ESTACION ON;
 INSERT INTO ESTACION (IdEstacion, Nombre, Descripcion) VALUES
@@ -374,12 +361,8 @@ SET IDENTITY_INSERT ESTACION OFF;
 GO
 
 /* ============================
-   PASO 6: ESTADOS DEL PEDIDO
-   Tramo común: Pendiente de Pago -> Pagado -> En Preparación -> Preparado.
-   De ahí se bifurca según el método de entrega:
-     Recogida en tienda: Listo para Retirar -> Retirado
-     Entrega a domicilio: En Espera Repartidor -> En Ruta -> Entregado
-   "Listo para Servir" queda reservado para un eventual modo de consumo en el local.
+ ESTADOS DEL PEDIDO
+ 
 ============================ */
 IF NOT EXISTS (SELECT * FROM ESTADO_PEDIDO)
 BEGIN
@@ -400,13 +383,8 @@ END
 GO
 
 /* ============================
-   PASO 7: MÉTODOS DE PAGO
-   Efectivo / Tarjeta de Crédito / Tarjeta de Débito: pago presencial (Caja, o el
-   botón Cobrar de un pedido pendiente) — se cobra en el datáfono físico, no se
-   digitan datos de tarjeta.
-   Pago Web: pago en línea desde el Carrito del Cliente (junto con Efectivo, que
-   ahí significa "pago contra entrega/retiro"). Es el único método de tarjeta que
-   pide nombre y últimos dígitos, porque simula el cobro de una pasarela en línea.
+  MÉTODOS DE PAGO
+   .
 ============================ */
 IF NOT EXISTS (SELECT * FROM METODO_PAGO WHERE IdMetodoPago = 1)
 BEGIN
@@ -436,7 +414,7 @@ END
 GO
 
 /* ============================
-   PASO 8: INGREDIENTES
+   INGREDIENTES
 ============================ */
 SET IDENTITY_INSERT INGREDIENTE ON;
 INSERT INTO INGREDIENTE (IdIngrediente, Nombre) VALUES
@@ -500,7 +478,7 @@ SET IDENTITY_INSERT INGREDIENTE OFF;
 GO
 
 /* ============================
-   PASO 9: PRODUCTOS
+   PRODUCTOS
 ============================ */
 SET IDENTITY_INSERT PRODUCTO ON;
 INSERT INTO PRODUCTO (IdProducto, Nombre, Descripcion, Precio, Activo, IdCategoria) VALUES
@@ -554,7 +532,7 @@ SET IDENTITY_INSERT PRODUCTO OFF;
 GO
 
 /* ============================
-   PASO 10: PRODUCTO_INGREDIENTE
+    PRODUCTO_INGREDIENTE
 ============================ */
 INSERT INTO PRODUCTO_INGREDIENTE (IdProducto, IdIngrediente) VALUES
 (1,1),(1,2),(1,3),(1,4),(1,5),
@@ -581,7 +559,7 @@ INSERT INTO PRODUCTO_INGREDIENTE (IdProducto, IdIngrediente) VALUES
 GO
 
 /* ============================
-   PASO 11: IMÁGENES DE PRODUCTOS
+ IMÁGENES DE PRODUCTOS
 ============================ */
 INSERT INTO PRODUCTO_IMAGEN (IdProducto, UrlImagen, EsPrincipal) VALUES
 (1,  '/uploads/productos/panini-artesanal.jpg',        1),
@@ -620,7 +598,7 @@ INSERT INTO PRODUCTO_IMAGEN (IdProducto, UrlImagen, EsPrincipal) VALUES
 GO
 
 /* ============================
-   PASO 12: COMBOS
+   COMBOS
 ============================ */
 SET IDENTITY_INSERT COMBO ON;
 INSERT INTO COMBO (IdCombo, Nombre, Descripcion, PrecioEspecial, Activo, IdCategoria, UrlImagen) VALUES
@@ -646,7 +624,7 @@ INSERT INTO COMBO_PRODUCTO (IdCombo, IdProducto, Cantidad) VALUES
 GO
 
 /* ============================
-   PASO 13: MENÚS Y DISPONIBILIDAD
+ MENÚS Y DISPONIBILIDAD
 ============================ */
 SET IDENTITY_INSERT MENU ON;
 INSERT INTO MENU (IdMenu, Nombre, HoraInicio, HoraFin, EstaActivo) VALUES
@@ -710,10 +688,8 @@ INSERT INTO MENU_ITEM (IdMenu, IdProducto, IdCombo) VALUES
 GO
 
 /* ============================
-   PASO 14: PROCESOS DE PREPARACIÓN
-   1 estación  → Bebidas simples
-   2 estaciones → Preparación + Despacho
-   3 estaciones → Caja + Cocina + Despacho
+    PROCESOS DE PREPARACIÓN
+ 
 ============================ */
 
 -- 1 ESTACIÓN → Solo Cocina
@@ -758,7 +734,3 @@ INSERT INTO PROCESO_PREPARACION (OrdenPaso, TiempoEstimadoMinutos, IdProducto, I
 (1, 2,  12, 1),(2, 18, 12, 2),(3, 3,  12, 3),  -- Ribeye Corte Abanico
 (1, 2,  13, 1),(2, 25, 13, 2),(3, 3,  13, 3);  -- Costilla BBQ
 GO
-
-PRINT '============================================================';
-PRINT '  SAL Y FUEGO — BASE DE DATOS LISTA CORRECTAMENTE';
-PRINT '============================================================';

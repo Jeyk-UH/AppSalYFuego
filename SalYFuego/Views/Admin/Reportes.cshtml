@@ -1,0 +1,136 @@
+@model Sal_Fuego.Aplication.DTOs.ReporteVentasDTO
+
+@{
+    ViewData["Title"] = "Reportes";
+
+    var etiquetasDiasJson = System.Text.Json.JsonSerializer.Serialize(Model.PedidosPorDia.Select(p => p.Etiqueta));
+    var cantidadesDiasJson = System.Text.Json.JsonSerializer.Serialize(Model.PedidosPorDia.Select(p => p.Cantidad));
+
+    var nombresMasVendidosJson = System.Text.Json.JsonSerializer.Serialize(Model.MasVendidos.Select(i => $"{i.Nombre} ({i.Tipo})"));
+    var cantidadesMasVendidosJson = System.Text.Json.JsonSerializer.Serialize(Model.MasVendidos.Select(i => i.CantidadVendida));
+
+    var nombresMenosVendidosJson = System.Text.Json.JsonSerializer.Serialize(Model.MenosVendidos.Select(i => $"{i.Nombre} ({i.Tipo})"));
+    var cantidadesMenosVendidosJson = System.Text.Json.JsonSerializer.Serialize(Model.MenosVendidos.Select(i => i.CantidadVendida));
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h1>Reportes</h1>
+            <p class="text-muted mb-0">Información consolidada de ventas y pedidos</p>
+        </div>
+        <a asp-controller="Admin" asp-action="Index" class="btn btn-outline-secondary">Volver</a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted text-uppercase small mb-3">Pedidos por Día (última semana)</h6>
+                    <canvas id="graficoPedidosPorDia" height="90"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="text-muted text-uppercase small mb-3">Productos y Combos Más Vendidos</h6>
+                    @if (Model.MasVendidos.Any())
+                    {
+                        <canvas id="graficoMasVendidos"></canvas>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">Aún no hay ventas registradas.</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="text-muted text-uppercase small mb-3">Productos y Combos Menos Vendidos</h6>
+                    @if (Model.MenosVendidos.Any())
+                    {
+                        <canvas id="graficoMenosVendidos"></canvas>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">Aún no hay ventas registradas.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script>
+        // Datos que vienen del Controller (ReporteVentasDTO), ya listos para graficar.
+        const etiquetasDias = @Html.Raw(etiquetasDiasJson);
+        const cantidadesDias = @Html.Raw(cantidadesDiasJson);
+
+        new Chart(document.getElementById('graficoPedidosPorDia'), {
+            type: 'bar',
+            data: {
+                labels: etiquetasDias,
+                datasets: [{
+                    label: 'Pedidos',
+                    data: cantidadesDias,
+                    backgroundColor: '#f5a623'
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+            }
+        });
+
+        const nombresMasVendidos = @Html.Raw(nombresMasVendidosJson);
+        const cantidadesMasVendidos = @Html.Raw(cantidadesMasVendidosJson);
+
+        if (nombresMasVendidos.length > 0) {
+            new Chart(document.getElementById('graficoMasVendidos'), {
+                type: 'bar',
+                data: {
+                    labels: nombresMasVendidos,
+                    datasets: [{
+                        label: 'Cantidad vendida',
+                        data: cantidadesMasVendidos,
+                        backgroundColor: '#28a745'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    plugins: { legend: { display: false } },
+                    scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+                }
+            });
+        }
+
+        const nombresMenosVendidos = @Html.Raw(nombresMenosVendidosJson);
+        const cantidadesMenosVendidos = @Html.Raw(cantidadesMenosVendidosJson);
+
+        if (nombresMenosVendidos.length > 0) {
+            new Chart(document.getElementById('graficoMenosVendidos'), {
+                type: 'bar',
+                data: {
+                    labels: nombresMenosVendidos,
+                    datasets: [{
+                        label: 'Cantidad vendida',
+                        data: cantidadesMenosVendidos,
+                        backgroundColor: '#dc3545'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    plugins: { legend: { display: false } },
+                    scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+                }
+            });
+        }
+    </script>
+}

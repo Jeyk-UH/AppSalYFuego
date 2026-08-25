@@ -9,6 +9,14 @@ namespace Sal_Fuego.Aplication.Services.Implementations
     public class ServicePedido : IServicePedido
     {
         private const int TopProductosMasVendidos = 5;
+        private const int TopReporteVentas = 5;
+        private const int DiasReportePedidos = 7;
+
+        // Abreviaturas de día en español para el gráfico "Pedidos por día"
+        private static readonly string[] DiasSemana =
+        {
+            "Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"
+        };
 
         // IdEstado (tabla ESTADO_PEDIDO, 10 estados reales — ver SalYFuegoDB_Maestro.sql):
         // 1 Pendiente de Pago, 2 Pagado, 3 En Preparación, 4 Preparado,
@@ -90,6 +98,41 @@ namespace Sal_Fuego.Aplication.Services.Implementations
                         Nombre = p.Nombre,
                         CantidadVendida = p.CantidadVendida
                     })
+                    .ToList()
+            };
+        }
+
+        // Pantalla de Reportes del Administrador: arma los 3 gráficos pedidos
+        // (pedidos por día, más vendidos, menos vendidos) a partir de los repositorios.
+        public async Task<ReporteVentasDTO> ObtenerReporteVentasAsync()
+        {
+            var desde = DateTime.Today.AddDays(-(DiasReportePedidos - 1));
+            var pedidosPorDia = await _repository.ObtenerPedidosDesdeAsync(desde);
+            var masVendidos = await _repository.ObtenerMasVendidosAsync(TopReporteVentas);
+            var menosVendidos = await _repository.ObtenerMenosVendidosAsync(TopReporteVentas);
+
+            // Se completan los 7 días del rango aunque no hayan tenido pedidos, para que
+            // el gráfico siempre muestre la semana completa (no solo los días con ventas).
+            var pedidosPorDiaCompleto = new List<PedidosPorDiaDTO>();
+            for (var i = 0; i < DiasReportePedidos; i++)
+            {
+                var fecha = desde.AddDays(i);
+                var cantidad = pedidosPorDia.FirstOrDefault(p => p.Fecha == fecha)?.Cantidad ?? 0;
+                pedidosPorDiaCompleto.Add(new PedidosPorDiaDTO
+                {
+                    Etiqueta = $"{DiasSemana[(int)fecha.DayOfWeek]} {fecha:dd/MM}",
+                    Cantidad = cantidad
+                });
+            }
+
+            return new ReporteVentasDTO
+            {
+                PedidosPorDia = pedidosPorDiaCompleto,
+                MasVendidos = masVendidos
+                    .Select(i => new ItemVendidoDTO { Nombre = i.Nombre, Tipo = i.Tipo, CantidadVendida = i.CantidadVendida })
+                    .ToList(),
+                MenosVendidos = menosVendidos
+                    .Select(i => new ItemVendidoDTO { Nombre = i.Nombre, Tipo = i.Tipo, CantidadVendida = i.CantidadVendida })
                     .ToList()
             };
         }

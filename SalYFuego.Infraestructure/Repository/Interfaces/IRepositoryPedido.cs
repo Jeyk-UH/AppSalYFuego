@@ -11,6 +11,22 @@ namespace Sal_Fuego.Infraestructure.Repository.Interfaces
         public int CantidadVendida { get; set; }
     }
 
+    // Resultado de la pantalla de Reportes: un producto o combo vendido, sin
+    // distinguir cuál de los dos es (para poder mezclarlos en un mismo ranking).
+    public class ItemVendidoResultado
+    {
+        public string Nombre { get; set; } = null!;
+        public string Tipo { get; set; } = null!; // "Producto" o "Combo"
+        public int CantidadVendida { get; set; }
+    }
+
+    // Resultado de la pantalla de Reportes: cantidad de pedidos en una fecha puntual.
+    public class PedidosPorDiaResultado
+    {
+        public DateTime Fecha { get; set; }
+        public int Cantidad { get; set; }
+    }
+
     public interface IRepositoryPedido
     {
         // Cantidad total de pedidos registrados
@@ -18,6 +34,18 @@ namespace Sal_Fuego.Infraestructure.Repository.Interfaces
 
         // Top de productos más vendidos según las cantidades registradas en DetallePedido
         Task<ICollection<ProductoVendidoResultado>> ObtenerProductosMasVendidosAsync(int top);
+
+        // Reporte: pedidos registrados desde una fecha en adelante, agrupados por día
+        // (solo trae los días que sí tuvieron al menos un pedido; completar los días
+        // en cero es responsabilidad del Service, que arma el reporte completo).
+        Task<ICollection<PedidosPorDiaResultado>> ObtenerPedidosDesdeAsync(DateTime desde);
+
+        // Reporte: top de productos Y combos más vendidos, mezclados en un solo ranking
+        Task<ICollection<ItemVendidoResultado>> ObtenerMasVendidosAsync(int top);
+
+        // Reporte: los productos y combos con menos ventas (entre los que sí se han
+        // vendido al menos una vez; no incluye los que nunca se han pedido)
+        Task<ICollection<ItemVendidoResultado>> ObtenerMenosVendidosAsync(int top);
 
         // Inserta el pedido junto con sus DetallePedido y Pago (una sola transacción)
         Task<Pedido> CrearAsync(Pedido pedido);

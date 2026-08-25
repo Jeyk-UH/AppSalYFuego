@@ -70,7 +70,7 @@
         }
 
         function textoBoton(idEstado) {
-            // 2 = Pagado, 3 = En Preparación (ver ESTADO_PEDIDO en SalYFuegoDB_Maestro.sql).
+            // 2 = Pagado, 3 = En Preparación.
             // Al avanzar desde "En Preparación" el pedido pasa a "Preparado" (4) y sale
             // de la cola de Cocina; de ahí en adelante lo gestiona Encargado/Repartidor.
             return idEstado === 3 ? 'Marcar listo' : 'Iniciar preparación';

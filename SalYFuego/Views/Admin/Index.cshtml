@@ -10,11 +10,17 @@
             <h1>Panel de Administración</h1>
             <p class="text-muted mb-0">Bienvenido, @User.Identity!.Name</p>
         </div>
-        <a asp-controller="Caja" asp-action="Index"
-           class="btn btn-lg"
-           style="background-color:#f5a623; color:#1a1a1a; font-weight:bold;">
-            Realizar Venta
-        </a>
+        <div class="d-flex gap-2">
+            <a asp-controller="Admin" asp-action="Reportes"
+               class="btn btn-lg btn-outline-dark">
+                Ver Reportes
+            </a>
+            <a asp-controller="Caja" asp-action="Index"
+               class="btn btn-lg"
+               style="background-color:#f5a623; color:#1a1a1a; font-weight:bold;">
+                Realizar Venta
+            </a>
+        </div>
     </div>
 
     <!-- Estadísticas -->
@@ -104,6 +110,14 @@
                class="card text-decoration-none h-100 text-center py-3 shadow-sm">
                 <div class="card-body">
                     <span class="fw-semibold" style="color:#1a1a1a;">Usuarios</span>
+                </div>
+            </a>
+        </div>
+        <div class="col">
+            <a asp-controller="Admin" asp-action="Reportes"
+               class="card text-decoration-none h-100 text-center py-3 shadow-sm">
+                <div class="card-body">
+                    <span class="fw-semibold" style="color:#1a1a1a;">Reportes</span>
                 </div>
             </a>
         </div>

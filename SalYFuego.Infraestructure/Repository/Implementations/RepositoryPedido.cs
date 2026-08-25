@@ -37,6 +37,67 @@ namespace Sal_Fuego.Infraestructure.Repository.Implementations
                 .ToListAsync();
         }
 
+        // Reporte: pedidos desde una fecha en adelante, agrupados por día. Se trae la
+        // lista completa a memoria (ToListAsync) y se agrupa ahí con LINQ normal en vez
+        // de armar el GroupBy directo en la consulta SQL: para la cantidad de pedidos de
+        // prueba que maneja este proyecto es más simple y más fácil de leer/depurar.
+        public async Task<ICollection<PedidosPorDiaResultado>> ObtenerPedidosDesdeAsync(DateTime desde)
+        {
+            var pedidos = await _context.Set<Pedido>()
+                .Where(p => p.FechaPedido >= desde)
+                .Select(p => p.FechaPedido)
+                .ToListAsync();
+
+            return pedidos
+                .GroupBy(f => f.Date)
+                .Select(g => new PedidosPorDiaResultado { Fecha = g.Key, Cantidad = g.Count() })
+                .ToList();
+        }
+
+        // Reporte: productos y combos más vendidos, mezclados en un solo ranking.
+        // Se consultan por separado (productos y combos usan tablas distintas) y se
+        // combinan en memoria: más simple que armar un UNION en la consulta a EF Core.
+        public async Task<ICollection<ItemVendidoResultado>> ObtenerMasVendidosAsync(int top)
+        {
+            var todos = await ObtenerProductosYCombosVendidosAsync();
+            return todos.OrderByDescending(i => i.CantidadVendida).Take(top).ToList();
+        }
+
+        public async Task<ICollection<ItemVendidoResultado>> ObtenerMenosVendidosAsync(int top)
+        {
+            var todos = await ObtenerProductosYCombosVendidosAsync();
+            return todos.OrderBy(i => i.CantidadVendida).Take(top).ToList();
+        }
+
+        // Helper compartido por ObtenerMasVendidosAsync/ObtenerMenosVendidosAsync: junta
+        // las cantidades vendidas de productos y de combos en una sola lista.
+        private async Task<List<ItemVendidoResultado>> ObtenerProductosYCombosVendidosAsync()
+        {
+            var productos = await _context.Set<DetallePedido>()
+                .Where(d => d.IdProducto != null)
+                .GroupBy(d => new { d.IdProducto, Nombre = d.IdProductoNavigation!.Nombre })
+                .Select(g => new ItemVendidoResultado
+                {
+                    Nombre = g.Key.Nombre,
+                    Tipo = "Producto",
+                    CantidadVendida = g.Sum(d => d.Cantidad)
+                })
+                .ToListAsync();
+
+            var combos = await _context.Set<DetallePedido>()
+                .Where(d => d.IdCombo != null)
+                .GroupBy(d => new { d.IdCombo, Nombre = d.IdComboNavigation!.Nombre })
+                .Select(g => new ItemVendidoResultado
+                {
+                    Nombre = g.Key.Nombre,
+                    Tipo = "Combo",
+                    CantidadVendida = g.Sum(d => d.Cantidad)
+                })
+                .ToListAsync();
+
+            return productos.Concat(combos).ToList();
+        }
+
         // Inserta el Pedido junto con sus DetallePedido y Pago ya armados en las
         // colecciones de navegación; EF Core encadena las tres inserciones en un
         // solo SaveChanges y completa las FK automáticamente.

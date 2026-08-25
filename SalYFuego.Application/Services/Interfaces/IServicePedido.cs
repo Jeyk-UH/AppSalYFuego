@@ -8,6 +8,10 @@ namespace Sal_Fuego.Aplication.Services.Interfaces
         // cantidad de pedidos realizados y productos más vendidos
         Task<EstadisticasAdminDTO> ObtenerEstadisticasAdminAsync();
 
+        // Pantalla de Reportes del Administrador: pedidos por día (última semana),
+        // top de productos/combos más vendidos y los de menos ventas.
+        Task<ReporteVentasDTO> ObtenerReporteVentasAsync();
+
         // Catálogo para Caja: productos y combos del menú disponible ahora
         Task<ICollection<MenuItemDTO>> ObtenerCatalogoVentaAsync();
 

@@ -21,5 +21,12 @@ namespace Sal_Fuego.Controllers
             var estadisticas = await _servicePedido.ObtenerEstadisticasAdminAsync();
             return View(estadisticas);
         }
+
+        // Pantalla de Reportes: gráficos de pedidos por día, más vendidos y menos vendidos.
+        public async Task<IActionResult> Reportes()
+        {
+            var reporte = await _servicePedido.ObtenerReporteVentasAsync();
+            return View(reporte);
+        }
     }
 }
