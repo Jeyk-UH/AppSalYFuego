@@ -19,6 +19,11 @@ namespace Sal_Fuego.Aplication.DTOs
     // Todo lo que necesita la pantalla de Reportes del Administrador.
     public record ReporteVentasDTO
     {
+        // Rango de fechas que se usó para armar el reporte (para mostrarlo en el
+        // filtro de la vista y que quede seleccionado tal como lo pidió el usuario).
+        public DateTime Desde { get; set; }
+        public DateTime Hasta { get; set; }
+
         public List<PedidosPorDiaDTO> PedidosPorDia { get; set; } = new();
         public List<ItemVendidoDTO> MasVendidos { get; set; } = new();
         public List<ItemVendidoDTO> MenosVendidos { get; set; } = new();

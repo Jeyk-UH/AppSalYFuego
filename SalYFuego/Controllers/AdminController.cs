@@ -23,9 +23,11 @@ namespace Sal_Fuego.Controllers
         }
 
         // Pantalla de Reportes: gráficos de pedidos por día, más vendidos y menos vendidos.
-        public async Task<IActionResult> Reportes()
+        // Desde/Hasta son opcionales (filtro de fechas); si no vienen, el Service usa
+        // por defecto la última semana.
+        public async Task<IActionResult> Reportes(DateTime? desde, DateTime? hasta)
         {
-            var reporte = await _servicePedido.ObtenerReporteVentasAsync();
+            var reporte = await _servicePedido.ObtenerReporteVentasAsync(desde, hasta);
             return View(reporte);
         }
     }

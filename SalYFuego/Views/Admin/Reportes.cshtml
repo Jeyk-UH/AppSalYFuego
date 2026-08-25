@@ -22,11 +22,27 @@
         <a asp-controller="Admin" asp-action="Index" class="btn btn-outline-secondary">Volver</a>
     </div>
 
+    <form asp-controller="Admin" asp-action="Reportes" method="get" class="row g-2 align-items-end mb-4">
+        <div class="col-auto">
+            <label class="form-label small mb-1">Desde</label>
+            <input type="date" name="desde" class="form-control" value="@Model.Desde.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-auto">
+            <label class="form-label small mb-1">Hasta</label>
+            <input type="date" name="hasta" class="form-control" value="@Model.Hasta.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn" style="background-color:#f5a623; color:#1a1a1a; font-weight:bold;">
+                Filtrar
+            </button>
+        </div>
+    </form>
+
     <div class="row g-4">
         <div class="col-12">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <h6 class="text-muted text-uppercase small mb-3">Pedidos por Día (última semana)</h6>
+                    <h6 class="text-muted text-uppercase small mb-3">Pedidos por Día</h6>
                     <canvas id="graficoPedidosPorDia" height="90"></canvas>
                 </div>
             </div>

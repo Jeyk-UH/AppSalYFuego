@@ -37,14 +37,16 @@ namespace Sal_Fuego.Infraestructure.Repository.Implementations
                 .ToListAsync();
         }
 
-        // Reporte: pedidos desde una fecha en adelante, agrupados por día. Se trae la
+        // Reporte: pedidos entre dos fechas (inclusive), agrupados por día. Se trae la
         // lista completa a memoria (ToListAsync) y se agrupa ahí con LINQ normal en vez
         // de armar el GroupBy directo en la consulta SQL: para la cantidad de pedidos de
         // prueba que maneja este proyecto es más simple y más fácil de leer/depurar.
-        public async Task<ICollection<PedidosPorDiaResultado>> ObtenerPedidosDesdeAsync(DateTime desde)
+        public async Task<ICollection<PedidosPorDiaResultado>> ObtenerPedidosEntreAsync(DateTime desde, DateTime hasta)
         {
+            var hastaExclusivo = hasta.Date.AddDays(1); // incluye todo el día "hasta"
+
             var pedidos = await _context.Set<Pedido>()
-                .Where(p => p.FechaPedido >= desde)
+                .Where(p => p.FechaPedido >= desde.Date && p.FechaPedido < hastaExclusivo)
                 .Select(p => p.FechaPedido)
                 .ToListAsync();
 
@@ -54,27 +56,33 @@ namespace Sal_Fuego.Infraestructure.Repository.Implementations
                 .ToList();
         }
 
-        // Reporte: productos y combos más vendidos, mezclados en un solo ranking.
-        // Se consultan por separado (productos y combos usan tablas distintas) y se
-        // combinan en memoria: más simple que armar un UNION en la consulta a EF Core.
-        public async Task<ICollection<ItemVendidoResultado>> ObtenerMasVendidosAsync(int top)
+        // Reporte: productos y combos más vendidos entre dos fechas, mezclados en un
+        // solo ranking. Se consultan por separado (productos y combos usan tablas
+        // distintas) y se combinan en memoria: más simple que armar un UNION en la
+        // consulta a EF Core.
+        public async Task<ICollection<ItemVendidoResultado>> ObtenerMasVendidosAsync(DateTime desde, DateTime hasta, int top)
         {
-            var todos = await ObtenerProductosYCombosVendidosAsync();
+            var todos = await ObtenerProductosYCombosVendidosAsync(desde, hasta);
             return todos.OrderByDescending(i => i.CantidadVendida).Take(top).ToList();
         }
 
-        public async Task<ICollection<ItemVendidoResultado>> ObtenerMenosVendidosAsync(int top)
+        public async Task<ICollection<ItemVendidoResultado>> ObtenerMenosVendidosAsync(DateTime desde, DateTime hasta, int top)
         {
-            var todos = await ObtenerProductosYCombosVendidosAsync();
+            var todos = await ObtenerProductosYCombosVendidosAsync(desde, hasta);
             return todos.OrderBy(i => i.CantidadVendida).Take(top).ToList();
         }
 
         // Helper compartido por ObtenerMasVendidosAsync/ObtenerMenosVendidosAsync: junta
-        // las cantidades vendidas de productos y de combos en una sola lista.
-        private async Task<List<ItemVendidoResultado>> ObtenerProductosYCombosVendidosAsync()
+        // las cantidades vendidas de productos y de combos en una sola lista, filtrando
+        // por la fecha del pedido al que pertenece cada línea de detalle.
+        private async Task<List<ItemVendidoResultado>> ObtenerProductosYCombosVendidosAsync(DateTime desde, DateTime hasta)
         {
+            var hastaExclusivo = hasta.Date.AddDays(1); // incluye todo el día "hasta"
+
             var productos = await _context.Set<DetallePedido>()
-                .Where(d => d.IdProducto != null)
+                .Where(d => d.IdProducto != null
+                    && d.IdPedidoNavigation.FechaPedido >= desde.Date
+                    && d.IdPedidoNavigation.FechaPedido < hastaExclusivo)
                 .GroupBy(d => new { d.IdProducto, Nombre = d.IdProductoNavigation!.Nombre })
                 .Select(g => new ItemVendidoResultado
                 {
@@ -85,7 +93,9 @@ namespace Sal_Fuego.Infraestructure.Repository.Implementations
                 .ToListAsync();
 
             var combos = await _context.Set<DetallePedido>()
-                .Where(d => d.IdCombo != null)
+                .Where(d => d.IdCombo != null
+                    && d.IdPedidoNavigation.FechaPedido >= desde.Date
+                    && d.IdPedidoNavigation.FechaPedido < hastaExclusivo)
                 .GroupBy(d => new { d.IdCombo, Nombre = d.IdComboNavigation!.Nombre })
                 .Select(g => new ItemVendidoResultado
                 {

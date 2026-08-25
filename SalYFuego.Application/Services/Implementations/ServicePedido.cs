@@ -10,7 +10,12 @@ namespace Sal_Fuego.Aplication.Services.Implementations
     {
         private const int TopProductosMasVendidos = 5;
         private const int TopReporteVentas = 5;
-        private const int DiasReportePedidos = 7;
+        private const int DiasReportePedidosPorDefecto = 7;
+
+        // Si el rango elegido en el filtro es más largo que esto, no se rellenan los
+        // días sin pedidos (el gráfico se vería con demasiadas barras en cero);
+        // simplemente se grafican los días que sí tuvieron ventas.
+        private const int MaxDiasParaRellenarEnCero = 60;
 
         // Abreviaturas de día en español para el gráfico "Pedidos por día"
         private static readonly string[] DiasSemana =
@@ -103,30 +108,57 @@ namespace Sal_Fuego.Aplication.Services.Implementations
         }
 
         // Pantalla de Reportes del Administrador: arma los 3 gráficos pedidos
-        // (pedidos por día, más vendidos, menos vendidos) a partir de los repositorios.
-        public async Task<ReporteVentasDTO> ObtenerReporteVentasAsync()
+        // (pedidos por día, más vendidos, menos vendidos) dentro del rango de fechas
+        // elegido en el filtro. Si no viene rango (primera carga de la pantalla), usa
+        // por defecto la última semana.
+        public async Task<ReporteVentasDTO> ObtenerReporteVentasAsync(DateTime? desde, DateTime? hasta)
         {
-            var desde = DateTime.Today.AddDays(-(DiasReportePedidos - 1));
-            var pedidosPorDia = await _repository.ObtenerPedidosDesdeAsync(desde);
-            var masVendidos = await _repository.ObtenerMasVendidosAsync(TopReporteVentas);
-            var menosVendidos = await _repository.ObtenerMenosVendidosAsync(TopReporteVentas);
+            var hastaFinal = (hasta ?? DateTime.Today).Date;
+            var desdeFinal = (desde ?? hastaFinal.AddDays(-(DiasReportePedidosPorDefecto - 1))).Date;
 
-            // Se completan los 7 días del rango aunque no hayan tenido pedidos, para que
-            // el gráfico siempre muestre la semana completa (no solo los días con ventas).
+            // Si el usuario invirtió las fechas en el filtro, se corrigen en vez de dar error.
+            if (desdeFinal > hastaFinal)
+                (desdeFinal, hastaFinal) = (hastaFinal, desdeFinal);
+
+            var pedidosPorDia = await _repository.ObtenerPedidosEntreAsync(desdeFinal, hastaFinal);
+            var masVendidos = await _repository.ObtenerMasVendidosAsync(desdeFinal, hastaFinal, TopReporteVentas);
+            var menosVendidos = await _repository.ObtenerMenosVendidosAsync(desdeFinal, hastaFinal, TopReporteVentas);
+
+            var totalDias = (hastaFinal - desdeFinal).Days + 1;
             var pedidosPorDiaCompleto = new List<PedidosPorDiaDTO>();
-            for (var i = 0; i < DiasReportePedidos; i++)
+
+            if (totalDias <= MaxDiasParaRellenarEnCero)
             {
-                var fecha = desde.AddDays(i);
-                var cantidad = pedidosPorDia.FirstOrDefault(p => p.Fecha == fecha)?.Cantidad ?? 0;
-                pedidosPorDiaCompleto.Add(new PedidosPorDiaDTO
+                // Se completan todos los días del rango aunque no hayan tenido pedidos,
+                // para que el gráfico siempre muestre el rango completo.
+                for (var i = 0; i < totalDias; i++)
                 {
-                    Etiqueta = $"{DiasSemana[(int)fecha.DayOfWeek]} {fecha:dd/MM}",
-                    Cantidad = cantidad
-                });
+                    var fecha = desdeFinal.AddDays(i);
+                    var cantidad = pedidosPorDia.FirstOrDefault(p => p.Fecha == fecha)?.Cantidad ?? 0;
+                    pedidosPorDiaCompleto.Add(new PedidosPorDiaDTO
+                    {
+                        Etiqueta = $"{DiasSemana[(int)fecha.DayOfWeek]} {fecha:dd/MM}",
+                        Cantidad = cantidad
+                    });
+                }
+            }
+            else
+            {
+                // Rango muy amplio: solo se grafican los días que sí tuvieron pedidos.
+                pedidosPorDiaCompleto = pedidosPorDia
+                    .OrderBy(p => p.Fecha)
+                    .Select(p => new PedidosPorDiaDTO
+                    {
+                        Etiqueta = $"{DiasSemana[(int)p.Fecha.DayOfWeek]} {p.Fecha:dd/MM}",
+                        Cantidad = p.Cantidad
+                    })
+                    .ToList();
             }
 
             return new ReporteVentasDTO
             {
+                Desde = desdeFinal,
+                Hasta = hastaFinal,
                 PedidosPorDia = pedidosPorDiaCompleto,
                 MasVendidos = masVendidos
                     .Select(i => new ItemVendidoDTO { Nombre = i.Nombre, Tipo = i.Tipo, CantidadVendida = i.CantidadVendida })
