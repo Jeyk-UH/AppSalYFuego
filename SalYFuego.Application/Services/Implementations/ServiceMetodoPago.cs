@@ -13,6 +13,7 @@ namespace Sal_Fuego.Aplication.Services.Implementations
             _repository = repository;
         }
 
+        // Lista todos los métodos de pago registrados
         public async Task<ICollection<MetodoPagoDTO>> ListAsync()
         {
             var metodos = await _repository.ListAsync();
@@ -23,12 +24,15 @@ namespace Sal_Fuego.Aplication.Services.Implementations
             }).ToList();
         }
 
+        // Métodos de pago para cobro presencial (Caja): todos menos Pago Web,
+        // que es exclusivo del checkout en línea del Cliente
         public async Task<ICollection<MetodoPagoDTO>> ListPresencialAsync()
         {
             var todos = await ListAsync();
             return todos.Where(m => m.Nombre != "Pago Web").ToList();
         }
 
+        // Métodos de pago para el checkout en línea del Cliente (Efectivo o Pago Web)
         public async Task<ICollection<MetodoPagoDTO>> ListEnLineaAsync()
         {
             var todos = await ListAsync();

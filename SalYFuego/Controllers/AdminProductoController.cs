@@ -56,6 +56,7 @@ namespace Sal_Fuego.Controllers
             return View(paginado);
         }
 
+        // Formulario para agregar un producto nuevo
         [HttpGet]
         public async Task<IActionResult> Agregar()
         {
@@ -63,6 +64,7 @@ namespace Sal_Fuego.Controllers
             return View(new ProductoFormDTO());
         }
 
+        // Guardar el producto nuevo (con su imagen, si se subió una)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Agregar(ProductoFormDTO dto)
@@ -78,6 +80,7 @@ namespace Sal_Fuego.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // Formulario para editar un producto existente
         [HttpGet]
         public async Task<IActionResult> Editar(int id)
         {
@@ -88,6 +91,7 @@ namespace Sal_Fuego.Controllers
             return View(dto);
         }
 
+        // Guardar los cambios del producto
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Editar(ProductoFormDTO dto)
@@ -103,6 +107,7 @@ namespace Sal_Fuego.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // Desactivar el producto (no se borra de la base de datos)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Eliminar(int id)

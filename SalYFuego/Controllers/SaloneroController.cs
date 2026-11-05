@@ -19,6 +19,7 @@ namespace Sal_Fuego.Controllers
             _servicePedido = servicePedido;
         }
 
+        // Pantalla principal de Salonero: la cola de pedidos por empacar/entregar
         public async Task<IActionResult> Index()
         {
             var cola = await _servicePedido.ObtenerColaSalonAsync();

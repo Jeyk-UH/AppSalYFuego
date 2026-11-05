@@ -22,12 +22,14 @@ namespace Sal_Fuego.Aplication.Services.Implementations
             _mapper = mapper;
         }
 
+        // Lista todos los combos
         public async Task<ICollection<ComboDTO>> ListAsync()
         {
             var list = await _repository.ListAsync();
             return _mapper.Map<ICollection<ComboDTO>>(list);
         }
 
+        // Datos de un combo para mostrar en su ficha de detalle
         public async Task<ComboDTO?> FindByIdAsync(int id)
         {
             var combo = await _repository.FindByIdAsync(id);

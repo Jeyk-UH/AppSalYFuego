@@ -16,6 +16,7 @@ namespace Sal_Fuego.Aplication.Services.Implementations
             _mapper = mapper;
         }
 
+        // Lista todos los roles (para el select del formulario de usuarios)
         public async Task<ICollection<RolDTO>> ListAsync()
         {
             var roles = await _repository.ListAsync();

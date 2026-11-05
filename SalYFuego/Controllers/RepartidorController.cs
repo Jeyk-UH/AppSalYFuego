@@ -20,6 +20,7 @@ namespace Sal_Fuego.Controllers
             _servicePedido = servicePedido;
         }
 
+        // Pantalla principal del Repartidor: la cola de pedidos por recoger/entregar
         public async Task<IActionResult> Index()
         {
             var cola = await _servicePedido.ObtenerColaRepartidorAsync();

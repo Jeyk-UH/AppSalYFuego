@@ -13,6 +13,7 @@ namespace Sal_Fuego.Aplication.Services.Implementations
             _repository = repository;
         }
 
+        // Lista todos los estados posibles de un pedido (para llenar filtros y selects)
         public async Task<ICollection<EstadoPedidoDTO>> ListAsync()
         {
             var estados = await _repository.ListAsync();

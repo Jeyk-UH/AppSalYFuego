@@ -22,12 +22,14 @@ namespace Sal_Fuego.Aplication.Services.Implementations
             _mapper = mapper;
         }
 
+        // Lista todos los productos
         public async Task<ICollection<ProductoDTO>> ListAsync()
         {
             var list = await _repository.ListAsync();
             return _mapper.Map<ICollection<ProductoDTO>>(list);
         }
 
+        // Datos de un producto para mostrar en su ficha de detalle
         public async Task<ProductoDTO?> FindByIdAsync(int id)
         {
             var producto = await _repository.FindByIdAsync(id);

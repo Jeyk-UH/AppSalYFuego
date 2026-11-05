@@ -85,7 +85,7 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <script>
-        // Datos que vienen del Controller (ReporteVentasDTO), ya listos para graficar.
+        // Gráfico 1: cantidad de pedidos por día, dentro del rango filtrado.
         const etiquetasDias = @Html.Raw(etiquetasDiasJson);
         const cantidadesDias = @Html.Raw(cantidadesDiasJson);
 
@@ -105,6 +105,7 @@
             }
         });
 
+        // Gráfico 2: ranking de productos/combos más vendidos (barras horizontales).
         const nombresMasVendidos = @Html.Raw(nombresMasVendidosJson);
         const cantidadesMasVendidos = @Html.Raw(cantidadesMasVendidosJson);
 
@@ -127,6 +128,7 @@
             });
         }
 
+        // Gráfico 3: los productos/combos con menos ventas (mismo tipo de gráfico).
         const nombresMenosVendidos = @Html.Raw(nombresMenosVendidosJson);
         const cantidadesMenosVendidos = @Html.Raw(cantidadesMenosVendidosJson);
 

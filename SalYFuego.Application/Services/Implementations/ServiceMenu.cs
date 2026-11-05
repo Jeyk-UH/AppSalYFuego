@@ -17,12 +17,14 @@ namespace Sal_Fuego.Aplication.Services.Implementations
             _mapper = mapper;
         }
 
+        // Lista todos los menús
         public async Task<ICollection<MenuDTO>> ListAsync()
         {
             var list = await _repository.ListAsync();
             return _mapper.Map<ICollection<MenuDTO>>(list);
         }
 
+        // El menú activo según la hora y el día actual
         public async Task<MenuDTO?> GetMenuDisponibleAsync()
         {
             var menu = await _repository.GetMenuDisponibleAsync();

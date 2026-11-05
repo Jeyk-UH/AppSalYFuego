@@ -18,6 +18,7 @@ namespace Sal_Fuego.Controllers
             _servicePedido = servicePedido;
         }
 
+        // Pantalla principal de Cocina: la cola de pedidos pendientes de preparar
         public async Task<IActionResult> Index()
         {
             var cola = await _servicePedido.ObtenerColaCocinaAsync();

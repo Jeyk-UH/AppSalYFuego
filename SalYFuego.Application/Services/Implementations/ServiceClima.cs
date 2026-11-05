@@ -20,6 +20,8 @@ namespace Sal_Fuego.Aplication.Services.Implementations
             _cliente = cliente;
         }
 
+        // Clima actual del restaurante. Si el Web Service externo falla, devuelve
+        // null en vez de lanzar una excepción (la vista simplemente no muestra el widget).
         public async Task<ClimaDTO?> ObtenerClimaActualAsync()
         {
             var resultado = await _cliente.ObtenerClimaActualAsync(LatitudRestaurante, LongitudRestaurante);

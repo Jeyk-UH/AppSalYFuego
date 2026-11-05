@@ -81,6 +81,7 @@ namespace Sal_Fuego.Controllers
             return View(new RegistroDTO());
         }
 
+        // Procesar registro de un nuevo cliente
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Registro(RegistroDTO dto)

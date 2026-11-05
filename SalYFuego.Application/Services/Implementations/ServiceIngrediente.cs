@@ -17,12 +17,14 @@ namespace Sal_Fuego.Aplication.Services.Implementations
             _mapper = mapper;
         }
 
+        // Lista todos los ingredientes
         public async Task<ICollection<IngredienteDTO>> ListAsync()
         {
             var list = await _repository.ListAsync();
             return _mapper.Map<ICollection<IngredienteDTO>>(list);
         }
 
+        // Datos de un ingrediente para el formulario de edición
         public async Task<IngredienteDTO?> FindByIdAsync(int id)
         {
             var ingrediente = await _repository.FindByIdAsync(id);

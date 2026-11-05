@@ -16,6 +16,7 @@ namespace Sal_Fuego.Controllers
             _servicePedido = servicePedido;
         }
 
+        // Pantalla principal del Administrador: estadísticas rápidas y accesos a mantenimientos
         public async Task<IActionResult> Index()
         {
             var estadisticas = await _servicePedido.ObtenerEstadisticasAdminAsync();

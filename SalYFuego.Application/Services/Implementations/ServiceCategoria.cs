@@ -16,6 +16,7 @@ namespace Sal_Fuego.Aplication.Services.Implementations
             _mapper = mapper;
         }
 
+        // Lista todas las categorías (usadas para filtros y formularios)
         public async Task<ICollection<CategoriaDTO>> ListAsync()
         {
             var list = await _repository.ListAsync();

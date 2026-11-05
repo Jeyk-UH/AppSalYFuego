@@ -39,6 +39,7 @@ namespace Sal_Fuego.Controllers
             return View(disponibles.ToPagedList(page ?? 1, TamanoPagina));
         }
 
+        // Ficha de un combo específico
         public async Task<IActionResult> Detalle(int id)
         {
             var combo = await _service.FindByIdAsync(id);

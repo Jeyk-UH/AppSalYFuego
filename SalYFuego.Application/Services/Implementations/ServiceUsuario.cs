@@ -26,12 +26,14 @@ namespace Sal_Fuego.Aplication.Services.Implementations
             _options = options;
         }
 
+        // Lista todos los usuarios (mantenimiento del Administrador)
         public async Task<ICollection<UsuarioDTO>> ListAsync()
         {
             var usuarios = await _repository.ListAsync();
             return _mapper.Map<ICollection<UsuarioDTO>>(usuarios);
         }
 
+        // Datos de un usuario para el formulario de edición
         public async Task<UsuarioFormDTO?> FindFormByIdAsync(int id)
         {
             var usuario = await _repository.FindByIdAsync(id);

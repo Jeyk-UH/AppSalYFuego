@@ -89,6 +89,8 @@ namespace Sal_Fuego.Aplication.Services.Implementations
             _repositoryCombo = repositoryCombo;
         }
 
+        // Estadísticas rápidas del panel de Administrador: total de pedidos y top de
+        // productos más vendidos
         public async Task<EstadisticasAdminDTO> ObtenerEstadisticasAdminAsync()
         {
             var cantidadPedidos = await _repository.ContarPedidosAsync();

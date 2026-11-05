@@ -17,12 +17,14 @@ namespace Sal_Fuego.Aplication.Services.Implementations
             _mapper = mapper;
         }
 
+        // Lista los procesos de preparación de todos los productos
         public async Task<ICollection<ProcesoDTO>> ListAsync()
         {
             var list = await _repository.ListAsync();
             return _mapper.Map<ICollection<ProcesoDTO>>(list);
         }
 
+        // Detalle del proceso de preparación de un producto
         public async Task<ProcesoDTO?> FindByIdAsync(int id)
         {
             var producto = await _repository.FindByIdAsync(id);
@@ -72,6 +74,7 @@ namespace Sal_Fuego.Aplication.Services.Implementations
             }
         }
 
+        // Lista las estaciones de trabajo (Cocina, Caja, etc.) para el formulario de pasos
         public async Task<ICollection<EstacionDTO>> ListEstacionesAsync()
         {
             var list = await _repository.ListEstacionesAsync();
